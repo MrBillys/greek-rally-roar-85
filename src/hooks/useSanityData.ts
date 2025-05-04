@@ -39,19 +39,22 @@ export function useRallies() {
   return { rallies, loading, error };
 }
 
-export function useRallyById(id: string | undefined) {
+export function useRallyById(slug: string | undefined) {
   const [rally, setRally] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!id) {
+    if (!slug) {
       setLoading(false);
       return;
     }
-    
+
+    setLoading(true); // Reset loading state when slug changes
+
+    // Fetch the rally data by slug
     client.fetch(`
-      *[_type == "rally" && _id == $id][0] {
+      *[_type == "rally" && slug.current == $slug][0] {
         _id,
         name,
         location,
@@ -67,16 +70,20 @@ export function useRallyById(id: string | undefined) {
         },
         slug
       }
-    `, { id })
+    `, { slug })
     .then(data => {
-      setRally(data);
+      if (data) {
+        setRally(data);
+      } else {
+        setRally(null); // In case no data is found for the slug
+      }
       setLoading(false);
     })
     .catch(err => {
       setError(err);
       setLoading(false);
     });
-  }, [id]);
+  }, [slug]); // Depend on `slug` to trigger fetch when it changes
 
   return { rally, loading, error };
 }

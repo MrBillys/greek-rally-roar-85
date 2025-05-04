@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -13,14 +12,16 @@ import { urlFor } from "@/lib/sanity";
 
 const RallyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  console.log(slug); // Log slug for debugging purposes
   const { rally, loading: rallyLoading, error: rallyError } = useRallyById(slug);
-  const { results, loading: resultsLoading } = useLiveResults();
-  const { standings, loading: standingsLoading } = useOverallStandings();
-  
+  const { results, loading: resultsLoading, error: resultsError } = useLiveResults();
+  const { standings, loading: standingsLoading, error: standingsError } = useOverallStandings();
+
   // Filter results and standings for this rally
   const rallyResults = rally ? results.filter(result => result.rallyId === rally._id) : [];
   const rallyStandings = rally ? standings.find(standing => standing.rallyId === rally._id) : null;
 
+  // Handling loading and error states
   if (rallyLoading) {
     return (
       <ThemeProvider defaultTheme="light">
@@ -64,7 +65,7 @@ const RallyDetail = () => {
           {/* Rally Header */}
           <div 
             className="relative h-64 md:h-96 bg-cover bg-center"
-            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'none' }}
+            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'url(/default-background.jpg)' }}
           >
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
               <div className="max-w-5xl mx-auto w-full text-white">
@@ -135,6 +136,10 @@ const RallyDetail = () => {
                     <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
                     <p className="mt-4">Loading results...</p>
                   </div>
+                ) : resultsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-500">Error loading results!</p>
+                  </div>
                 ) : rallyResults.length > 0 ? (
                   rallyResults.map((result) => (
                     <div key={result._id} className="mb-6">
@@ -179,6 +184,10 @@ const RallyDetail = () => {
                     <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
                     <p className="mt-4">Loading standings...</p>
                   </div>
+                ) : standingsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-500">Error loading standings!</p>
+                  </div>
                 ) : rallyStandings ? (
                   <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <table className="w-full">
@@ -187,8 +196,7 @@ const RallyDetail = () => {
                           <th className="px-4 py-3 text-left">Pos</th>
                           <th className="px-4 py-3 text-left">No</th>
                           <th className="px-4 py-3 text-left">Driver</th>
-                          <th className="px-4 py-3 text-left">Total Time</th>
-                          <th className="px-4 py-3 text-left">Gap</th>
+                          <th className="px-4 py-3 text-left">Points</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -197,8 +205,7 @@ const RallyDetail = () => {
                             <td className="px-4 py-3 font-bold">{driver.position}</td>
                             <td className="px-4 py-3">{driver.carNumber}</td>
                             <td className="px-4 py-3">{driver.driver}</td>
-                            <td className="px-4 py-3 font-mono">{driver.totalTime}</td>
-                            <td className="px-4 py-3 font-mono">{driver.gap}</td>
+                            <td className="px-4 py-3">{driver.points}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -212,14 +219,6 @@ const RallyDetail = () => {
                 )}
               </TabsContent>
             </Tabs>
-            
-            <div className="mt-8 flex justify-center">
-              <Link to="/calendar">
-                <Button variant="outline">
-                  Back to Calendar
-                </Button>
-              </Link>
-            </div>
           </div>
         </main>
         <Footer />
