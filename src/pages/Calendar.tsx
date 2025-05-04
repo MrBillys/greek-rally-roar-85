@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { rallies } from "@/data/mock-data";
 import RallyCard from "@/components/rally-card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
+import { Calendar as CalendarIcon, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,12 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { Menubar, MenubarMenu, MenubarTrigger } from "@/components/ui/menubar";
 
 const Calendar = () => {
   const [filter, setFilter] = useState<"all" | "upcoming" | "ongoing" | "completed">("all");
-  const [viewMode, setViewMode] = useState<"list" | "month">("list");
+  const [viewMode, setViewMode] = useState<"list" | "month" | "week">("list");
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [currentWeek, setCurrentWeek] = useState<Date>(new Date());
   
   const filteredRallies = rallies.filter(rally => {
     if (filter === "all") return true;
@@ -35,6 +37,43 @@ const Calendar = () => {
                rallyDate.getFullYear() === date.getFullYear();
       })
     : [];
+  
+  // Generate week days for the week view
+  const weekDays = date ? Array(7).fill(0).map((_, i) => {
+    const dayDate = startOfWeek(date, { weekStartsOn: 0 });
+    return addDays(dayDate, i);
+  }) : [];
+  
+  // Get current week's start and end dates
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 0 });
+  
+  // Get rallies for the current week
+  const ralliesInCurrentWeek = filteredRallies.filter(rally => {
+    const rallyDate = new Date(rally.date);
+    return rallyDate >= weekStart && rallyDate <= weekEnd;
+  });
+  
+  // Map rallies to their corresponding weekday
+  const rallyEventsByDay = weekDays.map(day => {
+    return filteredRallies.filter(rally => {
+      const rallyDate = new Date(rally.date);
+      return isSameDay(rallyDate, day);
+    });
+  });
+  
+  // Handle week navigation
+  const prevWeek = () => {
+    setCurrentWeek(subWeeks(currentWeek, 1));
+  };
+  
+  const nextWeek = () => {
+    setCurrentWeek(addWeeks(currentWeek, 1));
+  };
+  
+  const goToToday = () => {
+    setCurrentWeek(new Date());
+  };
 
   return (
     <ThemeProvider defaultTheme="light">
@@ -87,13 +126,14 @@ const Calendar = () => {
                 
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-300">View:</span>
-                  <Select value={viewMode} onValueChange={(value: "list" | "month") => setViewMode(value)}>
-                    <SelectTrigger className="w-[150px]">
+                  <Select value={viewMode} onValueChange={(value: "list" | "month" | "week") => setViewMode(value)}>
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select view" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="list">List View</SelectItem>
                       <SelectItem value="month">Monthly Calendar</SelectItem>
+                      <SelectItem value="week">Weekly Calendar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -112,7 +152,7 @@ const Calendar = () => {
                     ))}
                   </div>
                 )
-              ) : (
+              ) : viewMode === "month" ? (
                 <div className="flex flex-col items-center">
                   <div className="mb-6 bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 w-full max-w-md">
                     <CalendarComponent
@@ -154,6 +194,95 @@ const Calendar = () => {
                       )}
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+                  {/* Weekly Calendar Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center space-x-4">
+                      <button 
+                        onClick={goToToday}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md text-sm font-medium"
+                      >
+                        Today
+                      </button>
+                      <div className="flex items-center">
+                        <button 
+                          onClick={prevWeek} 
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button 
+                          onClick={nextWeek}
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <h2 className="text-lg font-semibold">
+                        {format(weekStart, 'MMMM d')} - {format(weekEnd, 'MMMM d, yyyy')}
+                      </h2>
+                    </div>
+                    
+                    <Menubar className="border-none bg-transparent">
+                      <MenubarMenu>
+                        <MenubarTrigger className={`cursor-pointer ${viewMode === "week" ? "bg-gray-200 dark:bg-gray-700" : ""}`}>Day</MenubarTrigger>
+                      </MenubarMenu>
+                      <MenubarMenu>
+                        <MenubarTrigger className={`cursor-pointer ${viewMode === "week" ? "bg-rally-purple text-white" : ""}`}>Week</MenubarTrigger>
+                      </MenubarMenu>
+                      <MenubarMenu>
+                        <MenubarTrigger className={`cursor-pointer ${viewMode === "month" ? "bg-gray-200 dark:bg-gray-700" : ""}`}>Month</MenubarTrigger>
+                      </MenubarMenu>
+                    </Menubar>
+                  </div>
+                  
+                  {/* Weekly Calendar Grid */}
+                  <div className="grid grid-cols-7">
+                    {/* Day headings */}
+                    {weekDays.map((day, i) => (
+                      <div key={i} className="text-center p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">
+                          {format(day, 'EEE')}
+                        </p>
+                        <p className={`text-lg font-medium ${isSameDay(day, new Date()) ? 'text-rally-purple' : ''}`}>
+                          {format(day, 'd')}
+                        </p>
+                      </div>
+                    ))}
+                    
+                    {/* Time slots for each day */}
+                    {weekDays.map((day, dayIndex) => (
+                      <div key={dayIndex} className="min-h-[600px] border-r border-gray-200 dark:border-gray-700 last:border-r-0">
+                        {/* Rally events for this day */}
+                        <div className="p-1">
+                          {rallyEventsByDay[dayIndex].map((rally) => (
+                            <div 
+                              key={rally.id}
+                              className={`my-1 p-2 rounded-md text-sm ${
+                                rally.status === "upcoming" ? "bg-blue-100 dark:bg-blue-900" : 
+                                rally.status === "ongoing" ? "bg-green-100 dark:bg-green-900" : 
+                                "bg-gray-100 dark:bg-gray-700"
+                              }`}
+                            >
+                              <p className="font-medium truncate">{rally.name}</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                {format(new Date(rally.date), 'HH:mm')} - {rally.location}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Time slots visualization */}
+                        {Array(12).fill(0).map((_, i) => (
+                          <div key={i} className="border-t border-gray-100 dark:border-gray-800 h-12">
+                            <span className="text-xs text-gray-400 pl-1">{i + 8}:00</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
