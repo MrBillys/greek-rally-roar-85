@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { CalendarIcon, Flag, MapIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { urlFor } from "@/lib/sanity";
 
 interface RallyCardProps {
   rally: {
-    id: string;
+    _id: string;
     name: string;
     location: string;
     date: string;
-    image: string;
+    image: any; // Sanity image
     status: "upcoming" | "ongoing" | "completed";
+    slug: {
+      current: string;
+    };
   };
 }
 
@@ -30,14 +34,16 @@ export default function RallyCard({ rally }: RallyCardProps) {
   };
 
   return (
-    <Link to={`/rallies/${rally.id}`}>
+    <Link to={`/rallies/${rally.slug.current}`}>
       <Card className="rally-card h-full hover:translate-y-[-5px] transition-all duration-300">
         <div className="relative h-48 overflow-hidden">
-          <img
-            src={rally.image}
-            alt={rally.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-          />
+          {rally.image && (
+            <img
+              src={urlFor(rally.image).width(600).url()}
+              alt={rally.name}
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            />
+          )}
           <div className="absolute top-2 right-2">{getStatusBadge()}</div>
         </div>
         <CardHeader>

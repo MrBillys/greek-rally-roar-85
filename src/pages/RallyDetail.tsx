@@ -1,42 +1,27 @@
 
-import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { rallies, liveResults, overallStandings } from "@/data/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, Clock, Flag, MapIcon } from "lucide-react";
 import NotFound from "./NotFound";
+import { useRallyById, useLiveResults, useOverallStandings } from "@/hooks/useSanityData";
+import { urlFor } from "@/lib/sanity";
 
 const RallyDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const [rally, setRally] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [rallyResults, setRallyResults] = useState<any[]>([]);
-  const [rallyStandings, setRallyStandings] = useState<any>(null);
+  const { slug } = useParams<{ slug: string }>();
+  const { rally, loading: rallyLoading, error: rallyError } = useRallyById(slug);
+  const { results, loading: resultsLoading } = useLiveResults();
+  const { standings, loading: standingsLoading } = useOverallStandings();
+  
+  // Filter results and standings for this rally
+  const rallyResults = rally ? results.filter(result => result.rallyId === rally._id) : [];
+  const rallyStandings = rally ? standings.find(standing => standing.rallyId === rally._id) : null;
 
-  useEffect(() => {
-    // Simulating data fetch
-    setTimeout(() => {
-      const foundRally = rallies.find(r => r.id === id);
-      setRally(foundRally || null);
-      
-      // Get rally results
-      const results = liveResults.filter(result => result.rallyId === id);
-      setRallyResults(results);
-      
-      // Get rally standings
-      const standings = overallStandings.find(standing => standing.rallyId === id);
-      setRallyStandings(standings || null);
-      
-      setLoading(false);
-    }, 300);
-  }, [id]);
-
-  if (loading) {
+  if (rallyLoading) {
     return (
       <ThemeProvider defaultTheme="light">
         <div className="flex flex-col min-h-screen">
@@ -53,7 +38,7 @@ const RallyDetail = () => {
     );
   }
 
-  if (!rally) {
+  if (rallyError || !rally) {
     return <NotFound />;
   }
 
@@ -79,7 +64,7 @@ const RallyDetail = () => {
           {/* Rally Header */}
           <div 
             className="relative h-64 md:h-96 bg-cover bg-center"
-            style={{ backgroundImage: `url(${rally.image})` }}
+            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'none' }}
           >
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
               <div className="max-w-5xl mx-auto w-full text-white">
@@ -115,33 +100,44 @@ const RallyDetail = () => {
               
               <TabsContent value="stages">
                 <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="px-4 py-3 text-left">Stage</th>
-                        <th className="px-4 py-3 text-left">Distance</th>
-                        <th className="px-4 py-3 text-left">Date</th>
-                        <th className="px-4 py-3 text-left">Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rally.specialStages.map((stage: any, index: number) => (
-                        <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
-                          <td className="px-4 py-3 font-medium">{stage.name}</td>
-                          <td className="px-4 py-3">{stage.distance}</td>
-                          <td className="px-4 py-3">{stage.date}</td>
-                          <td className="px-4 py-3">{stage.time}</td>
+                  {rally.specialStages && rally.specialStages.length > 0 ? (
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="px-4 py-3 text-left">Stage</th>
+                          <th className="px-4 py-3 text-left">Distance</th>
+                          <th className="px-4 py-3 text-left">Date</th>
+                          <th className="px-4 py-3 text-left">Time</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {rally.specialStages.map((stage: any, index: number) => (
+                          <tr key={index} className="border-b border-gray-200 dark:border-gray-700">
+                            <td className="px-4 py-3 font-medium">{stage.name}</td>
+                            <td className="px-4 py-3">{stage.distance}</td>
+                            <td className="px-4 py-3">{stage.date}</td>
+                            <td className="px-4 py-3">{stage.time}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p>No special stages defined for this rally yet.</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
               <TabsContent value="results">
-                {rallyResults.length > 0 ? (
+                {resultsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                    <p className="mt-4">Loading results...</p>
+                  </div>
+                ) : rallyResults.length > 0 ? (
                   rallyResults.map((result) => (
-                    <div key={result.stageId} className="mb-6">
+                    <div key={result._id} className="mb-6">
                       <h3 className="text-lg font-bold mb-3">{result.stageName}</h3>
                       <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                         <table className="w-full">
@@ -178,7 +174,12 @@ const RallyDetail = () => {
               </TabsContent>
               
               <TabsContent value="standings">
-                {rallyStandings ? (
+                {standingsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                    <p className="mt-4">Loading standings...</p>
+                  </div>
+                ) : rallyStandings ? (
                   <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <table className="w-full">
                       <thead>

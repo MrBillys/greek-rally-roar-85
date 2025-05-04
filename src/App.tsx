@@ -26,7 +26,7 @@ const App = () => (
           <Route path="/live" element={<LiveResults />} />
           <Route path="/drivers" element={<Drivers />} />
           <Route path="/about" element={<About />} />
-          <Route path="/rallies/:id" element={<RallyDetail />} />
+          <Route path="/rallies/:slug" element={<RallyDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

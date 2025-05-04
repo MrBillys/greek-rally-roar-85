@@ -3,13 +3,14 @@ import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { rallies } from "@/data/mock-data";
 import RallyCard from "@/components/rally-card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { useRallies } from "@/hooks/useSanityData";
 
 const Calendar = () => {
   const [filter, setFilter] = useState<"all" | "upcoming" | "ongoing" | "completed">("all");
+  const { rallies, loading, error } = useRallies();
   
   const filteredRallies = rallies.filter(rally => {
     if (filter === "all") return true;
@@ -64,7 +65,16 @@ const Calendar = () => {
                 </Badge>
               </div>
               
-              {filteredRallies.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                  <p className="mt-4 text-gray-600 dark:text-gray-400">Loading rallies...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <p className="text-red-500">Error loading rallies: {error.message}</p>
+                </div>
+              ) : filteredRallies.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarIcon className="mx-auto h-16 w-16 text-gray-400" />
                   <p className="mt-4 text-gray-600 dark:text-gray-400">No rallies found matching your filter.</p>
@@ -72,7 +82,7 @@ const Calendar = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredRallies.map((rally) => (
-                    <RallyCard key={rally.id} rally={rally} />
+                    <RallyCard key={rally._id} rally={rally} />
                   ))}
                 </div>
               )}
