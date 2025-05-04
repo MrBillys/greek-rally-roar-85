@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -227,7 +226,7 @@ const Calendar = () => {
                     
                     <Menubar className="border-none bg-transparent">
                       <MenubarMenu>
-                        <MenubarTrigger className={`cursor-pointer ${viewMode === "week" ? "bg-gray-200 dark:bg-gray-700" : ""}`}>Day</MenubarTrigger>
+                        <MenubarTrigger className="cursor-pointer">Day</MenubarTrigger>
                       </MenubarMenu>
                       <MenubarMenu>
                         <MenubarTrigger className={`cursor-pointer ${viewMode === "week" ? "bg-rally-purple text-white" : ""}`}>Week</MenubarTrigger>
