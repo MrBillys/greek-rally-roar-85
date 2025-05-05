@@ -6,10 +6,39 @@ import type {
 } from "@/types/schema";
 
 /**
+ * Helper function to map API data to match component props
+ */
+const mapRallyToCardProps = (rally: any) => {
+  return {
+    _id: rally._id,
+    name: rally.title || rally.name, // Handle both field names
+    location: rally.location,
+    date: rally.date,
+    image: rally.image,
+    status: rally.status,
+    slug: rally.slug
+  };
+};
+
+const mapDriverToCardProps = (driver: any) => {
+  return {
+    _id: driver._id,
+    name: driver.name,
+    nationality: driver.nationality,
+    image: driver.photo, // Map photo to image for consistency
+    car: driver.car ? `${driver.car.make} ${driver.car.model}` : 'Unknown',
+    team: driver.team ? driver.team.name : 'Independent',
+    championships: driver.championships || 0,
+    podiums: driver.podiums || 0,
+    bio: driver.bio || ''
+  };
+};
+
+/**
  * Hook to fetch all rallies from Sanity
  */
 export function useRallies() {
-  const [rallies, setRallies] = useState<Rally[]>([]);
+  const [rallies, setRallies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -38,7 +67,7 @@ export function useRallies() {
       } | order(date asc)
     `)
     .then(data => {
-      setRallies(data);
+      setRallies(data.map(mapRallyToCardProps));
       setLoading(false);
     })
     .catch(err => {
@@ -54,7 +83,7 @@ export function useRallies() {
  * Hook to fetch a specific rally by slug
  */
 export function useRallyBySlug(slug: string | undefined) {
-  const [rally, setRally] = useState<Rally | null>(null);
+  const [rally, setRally] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -90,7 +119,7 @@ export function useRallyBySlug(slug: string | undefined) {
       }
     `, { slug })
     .then(data => {
-      setRally(data);
+      setRally(data ? mapRallyToCardProps(data) : null);
       setLoading(false);
     })
     .catch(err => {
@@ -106,7 +135,7 @@ export function useRallyBySlug(slug: string | undefined) {
  * Hook to fetch a specific rally by ID
  */
 export function useRallyById(slug: string | undefined) {
-  const [rally, setRally] = useState<Rally | null>(null);
+  const [rally, setRally] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -122,7 +151,7 @@ export function useRallyById(slug: string | undefined) {
     client.fetch(`
       *[_type == "rally" && slug.current == $slug][0] {
         _id,
-        title as name,
+        title,
         shortCode,
         date,
         location,
@@ -144,7 +173,21 @@ export function useRallyById(slug: string | undefined) {
       }
     `, { slug })
     .then(data => {
-      setRally(data);
+      setRally(data ? {
+        _id: data._id,
+        name: data.title,
+        shortCode: data.shortCode,
+        date: data.date,
+        location: data.location,
+        status: data.status,
+        organizer: data.organizer,
+        website: data.website,
+        image: data.image,
+        description: data.description,
+        championship: data.championship,
+        slug: data.slug,
+        specialStages: data.specialStages
+      } : null);
       setLoading(false);
     })
     .catch(err => {
@@ -212,7 +255,7 @@ export function useRallyByShortCode(shortCode: string | undefined) {
  * Hook to fetch all drivers
  */
 export function useDrivers() {
-  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -224,7 +267,7 @@ export function useDrivers() {
         name,
         birthDate,
         nationality,
-        photo as image,
+        photo,
         team->{
           _id, 
           name,
@@ -235,11 +278,14 @@ export function useDrivers() {
         championships,
         podiums,
         slug,
-        "car": *[_type == "car" && references(^._id)][0]
+        "car": *[_type == "car" && references(^._id)][0]{
+          make, 
+          model
+        }
       } | order(name asc)
     `)
     .then(data => {
-      setDrivers(data);
+      setDrivers(data.map(mapDriverToCardProps));
       setLoading(false);
     })
     .catch(err => {
@@ -288,7 +334,7 @@ export function useDriverBySlug(slug: string | undefined) {
       }
     `, { slug })
     .then(data => {
-      setDriver(data);
+      setDriver(data ? mapDriverToCardProps(data) : null);
       setLoading(false);
     })
     .catch(err => {

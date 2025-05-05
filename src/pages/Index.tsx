@@ -18,14 +18,14 @@ const Index = () => {
   
   // Filter rallies for upcoming and ongoing events
   const featuredRallies = rallies
-    .filter(rally => rally.status === "upcoming" || rally.status === "ongoing")
+    .filter(rally => rally.status === "upcoming" || rally.status === "in-progress")
     .slice(0, 3);
 
   // Get featured drivers
   const featuredDrivers = drivers.slice(0, 3);
   
   // Get current ongoing rally standings if available
-  const ongoingRally = rallies.find(rally => rally.status === "ongoing");
+  const ongoingRally = rallies.find(rally => rally.status === "in-progress");
   const ongoingRallyStandings = ongoingRally 
     ? standings.find(s => s.rallyId === ongoingRally._id)
     : null;
