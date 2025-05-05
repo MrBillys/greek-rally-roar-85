@@ -17,3 +17,11 @@ const builder = imageUrlBuilder(client);
 export function urlFor(source: SanityImageSource) {
   return builder.image(source);
 }
+
+// Helper function to create Sanity references
+export const createReference = (type: string, id: string) => {
+  return {
+    _type: 'reference',
+    _ref: id
+  };
+};
