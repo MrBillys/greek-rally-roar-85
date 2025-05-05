@@ -334,7 +334,23 @@ export function useDriverBySlug(slug: string | undefined) {
       }
     `, { slug })
     .then(data => {
-      setDriver(data ? mapDriverToCardProps(data) : null);
+      // Fix: Explicitly set driver data with correct type handling
+      if (data) {
+        setDriver({
+          _id: data._id,
+          name: data.name,
+          birthDate: data.birthDate,
+          nationality: data.nationality,
+          photo: data.photo,
+          team: data.team,
+          bio: data.bio || '',
+          championships: data.championships || 0,
+          podiums: data.podiums || 0,
+          slug: data.slug
+        });
+      } else {
+        setDriver(null);
+      }
       setLoading(false);
     })
     .catch(err => {
