@@ -1,3 +1,4 @@
+
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -12,7 +13,7 @@ import { urlFor } from "@/lib/sanity";
 
 const RallyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  console.log(slug); // Log slug for debugging purposes
+  console.log("Current slug:", slug); // Log slug for debugging purposes
   const { rally, loading: rallyLoading, error: rallyError } = useRallyById(slug);
   const { results, loading: resultsLoading, error: resultsError } = useLiveResults();
   const { standings, loading: standingsLoading, error: standingsError } = useOverallStandings();
@@ -48,7 +49,7 @@ const RallyDetail = () => {
     switch (rally.status) {
       case "upcoming":
         return <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Upcoming</Badge>;
-      case "ongoing":
+      case "in-progress":
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Ongoing</Badge>;
       case "completed":
         return <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Completed</Badge>;
@@ -65,7 +66,7 @@ const RallyDetail = () => {
           {/* Rally Header */}
           <div 
             className="relative h-64 md:h-96 bg-cover bg-center"
-            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'url(/default-background.jpg)' }}
+            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'url(/placeholder.svg)' }}
           >
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
               <div className="max-w-5xl mx-auto w-full text-white">
@@ -156,7 +157,7 @@ const RallyDetail = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {result.results.map((driver: any) => (
+                            {result.results && result.results.map((driver: any) => (
                               <tr key={driver.carNumber} className="border-b border-gray-200 dark:border-gray-700">
                                 <td className="px-4 py-3 font-bold">{driver.position}</td>
                                 <td className="px-4 py-3">{driver.carNumber}</td>
@@ -200,7 +201,7 @@ const RallyDetail = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {rallyStandings.standings.map((driver: any) => (
+                        {rallyStandings.standings && rallyStandings.standings.map((driver: any) => (
                           <tr key={driver.carNumber} className="border-b border-gray-200 dark:border-gray-700">
                             <td className="px-4 py-3 font-bold">{driver.position}</td>
                             <td className="px-4 py-3">{driver.carNumber}</td>

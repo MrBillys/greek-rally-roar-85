@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { client } from "@/lib/sanity";
 import type { 
@@ -104,6 +103,60 @@ export function useRallyBySlug(slug: string | undefined) {
 }
 
 /**
+ * Hook to fetch a specific rally by ID
+ */
+export function useRallyById(slug: string | undefined) {
+  const [rally, setRally] = useState<Rally | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // Fetch rally by slug with all related data
+    client.fetch(`
+      *[_type == "rally" && slug.current == $slug][0] {
+        _id,
+        title as name,
+        shortCode,
+        date,
+        location,
+        status,
+        organizer,
+        website,
+        image,
+        description,
+        championship->{_id, name},
+        slug,
+        specialStages[] {
+          name,
+          distance,
+          status,
+          startTime,
+          date,
+          time
+        }
+      }
+    `, { slug })
+    .then(data => {
+      setRally(data);
+      setLoading(false);
+    })
+    .catch(err => {
+      setError(err);
+      setLoading(false);
+    });
+  }, [slug]);
+
+  return { rally, loading, error };
+}
+
+/**
  * Hook to fetch a specific rally by shortCode
  */
 export function useRallyByShortCode(shortCode: string | undefined) {
@@ -171,7 +224,7 @@ export function useDrivers() {
         name,
         birthDate,
         nationality,
-        photo,
+        photo as image,
         team->{
           _id, 
           name,
@@ -181,7 +234,8 @@ export function useDrivers() {
         bio,
         championships,
         podiums,
-        slug
+        slug,
+        "car": *[_type == "car" && references(^._id)][0]
       } | order(name asc)
     `)
     .then(data => {
@@ -353,7 +407,7 @@ export function useStageResults(stageId: string | undefined) {
  * Hook to fetch all live results across all rallies
  */
 export function useLiveResults() {
-  const [results, setResults] = useState<StageResult[]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -398,7 +452,7 @@ export function useLiveResults() {
  * Hook to fetch overall championship standings
  */
 export function useOverallStandings() {
-  const [standings, setStandings] = useState<OverallStanding[]>([]);
+  const [standings, setStandings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

@@ -12,7 +12,7 @@ interface RallyCardProps {
     location: string;
     date: string;
     image: any; // Sanity image
-    status: "upcoming" | "ongoing" | "completed";
+    status: "upcoming" | "in-progress" | "completed";
     slug: {
       current: string;
     };
@@ -24,7 +24,7 @@ export default function RallyCard({ rally }: RallyCardProps) {
     switch (rally.status) {
       case "upcoming":
         return <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Upcoming</Badge>;
-      case "ongoing":
+      case "in-progress":
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Ongoing</Badge>;
       case "completed":
         return <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Completed</Badge>;
