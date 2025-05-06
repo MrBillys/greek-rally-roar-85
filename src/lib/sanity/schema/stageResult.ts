@@ -5,18 +5,28 @@ export default {
   type: 'document',
   fields: [
     {
-      name: 'stage',
-      title: 'Stage',
-      type: 'reference',
-      to: [{ type: 'stage' }],
-      description: 'The stage this result is related to'
+      name: 'stageId',
+      title: 'Stage ID',
+      type: 'string',
+      description: 'ID of the stage'
     },
     {
-      name: 'rally',
-      title: 'Rally',
-      type: 'reference',
-      to: [{ type: 'rally' }],
-      description: 'The rally this stage result belongs to'
+      name: 'stageName',
+      title: 'Stage Name',
+      type: 'string',
+      description: 'Name of the stage'
+    },
+    {
+      name: 'rallyId',
+      title: 'Rally ID',
+      type: 'string',
+      description: 'ID of the rally'
+    },
+    {
+      name: 'rallyName',
+      title: 'Rally Name',
+      type: 'string',
+      description: 'Name of the rally'
     },
     {
       name: 'position',
@@ -62,6 +72,13 @@ export default {
       description: 'The entry (team) this result belongs to'
     },
     {
+      name: 'stage',
+      title: 'Stage',
+      type: 'reference',
+      to: [{ type: 'stage' }],
+      description: 'The stage this result is related to'
+    },
+    {
       name: 'date',
       title: 'Date',
       type: 'datetime',
@@ -84,22 +101,5 @@ export default {
       }],
       description: 'Array of individual results for the stage'
     }
-  ],
-  initialValue: {
-    retired: false
-  },
-  preview: {
-    select: {
-      title: 'stage.name',
-      subtitle: 'rally.title',
-      position: 'position'
-    },
-    prepare(selection) {
-      const { title, subtitle, position } = selection
-      return {
-        title: `${title || 'Stage'} - Position ${position || 'N/A'}`,
-        subtitle: `${subtitle || 'Rally'}`
-      }
-    }
-  }
+  ]
 }

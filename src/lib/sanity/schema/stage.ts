@@ -36,18 +36,6 @@ export default {
       description: 'The start time of the stage'
     },
     {
-      name: 'date',
-      title: 'Date',
-      type: 'date',
-      description: 'The date of the stage'
-    },
-    {
-      name: 'time',
-      title: 'Time',
-      type: 'string',
-      description: 'The scheduled time of the stage'
-    },
-    {
       name: 'rally',
       title: 'Rally',
       type: 'reference',

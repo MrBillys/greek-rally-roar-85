@@ -5,11 +5,16 @@ export default {
   type: 'document',
   fields: [
     {
-      name: 'rally',
-      title: 'Rally',
-      type: 'reference',
-      to: [{ type: 'rally' }],
-      description: 'The rally this result belongs to'
+      name: 'rallyId',
+      title: 'Rally ID',
+      type: 'string',
+      description: 'ID of the rally'
+    },
+    {
+      name: 'rallyName',
+      title: 'Rally Name',
+      type: 'string',
+      description: 'Name of the rally'
     },
     {
       name: 'position',
@@ -48,22 +53,5 @@ export default {
       type: 'datetime',
       description: 'Date when the result was recorded'
     }
-  ],
-  initialValue: {
-    retired: false
-  },
-  preview: {
-    select: {
-      title: 'rally.title',
-      subtitle: 'entry.number',
-      position: 'position'
-    },
-    prepare(selection) {
-      const { title, subtitle, position } = selection
-      return {
-        title: `${title || 'Rally'} - Position ${position || 'N/A'}`,
-        subtitle: `Car #${subtitle || 'N/A'}`
-      }
-    }
-  }
+  ]
 }
