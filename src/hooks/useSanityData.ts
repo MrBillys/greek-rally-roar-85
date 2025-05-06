@@ -4,6 +4,7 @@ import type {
   Rally, Driver, RallyResult, OverallStanding, Stage, 
   StageResult, Team, Car, Entry, Penalty, Championship
 } from "@/types/schema";
+import { toast } from "@/components/ui/use-toast";
 
 /**
  * Helper function to map API data to match component props
@@ -162,7 +163,8 @@ export function useRallyById(slug: string | undefined) {
         description,
         championship->{_id, name},
         slug,
-        specialStages[] {
+        "specialStages": *[_type == "stage" && references(^._id)] {
+          _id,
           name,
           distance,
           status,
@@ -173,26 +175,39 @@ export function useRallyById(slug: string | undefined) {
       }
     `, { slug })
     .then(data => {
-      setRally(data ? {
-        _id: data._id,
-        name: data.title,
-        shortCode: data.shortCode,
-        date: data.date,
-        location: data.location,
-        status: data.status,
-        organizer: data.organizer,
-        website: data.website,
-        image: data.image,
-        description: data.description,
-        championship: data.championship,
-        slug: data.slug,
-        specialStages: data.specialStages
-      } : null);
+      if (data) {
+        // Debug info for special stages
+        console.log('Special stages from query:', data.specialStages);
+        
+        setRally({
+          _id: data._id,
+          name: data.title,
+          shortCode: data.shortCode,
+          date: data.date,
+          location: data.location,
+          status: data.status,
+          organizer: data.organizer,
+          website: data.website,
+          image: data.image,
+          description: data.description,
+          championship: data.championship,
+          slug: data.slug,
+          specialStages: data.specialStages || []
+        });
+      } else {
+        setRally(null);
+      }
       setLoading(false);
     })
     .catch(err => {
+      console.error("Error fetching rally:", err);
       setError(err);
       setLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to load rally details",
+        variant: "destructive",
+      });
     });
   }, [slug]);
 
@@ -449,16 +464,29 @@ export function useStageResults(stageId: string | undefined) {
           coDriver->{name, nationality},
           car->{make, model, category},
           team->{name, logo}
+        },
+        stage->{
+          _id,
+          name,
+          distance,
+          status
         }
       }
     `, { stageId })
     .then(data => {
+      console.log(`Stage results for stage ${stageId}:`, data);
       setResults(data);
       setLoading(false);
     })
     .catch(err => {
+      console.error(`Error fetching results for stage ${stageId}:`, err);
       setError(err);
       setLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to load stage results",
+        variant: "destructive",
+      });
     });
   }, [stageId]);
 
@@ -498,12 +526,19 @@ export function useLiveResults() {
       }
     `)
     .then(data => {
+      console.log("Stage results data:", data);
       setResults(data);
       setLoading(false);
     })
     .catch(err => {
+      console.error("Error fetching stage results:", err);
       setError(err);
       setLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to load results",
+        variant: "destructive",
+      });
     });
   }, []);
 
@@ -546,12 +581,19 @@ export function useOverallStandings() {
       }
     `)
     .then(data => {
+      console.log("Overall standings data:", data);
       setStandings(data);
       setLoading(false);
     })
     .catch(err => {
+      console.error("Error fetching standings:", err);
       setError(err);
       setLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to load standings",
+        variant: "destructive",
+      });
     });
   }, []);
 

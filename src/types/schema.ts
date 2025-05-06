@@ -28,8 +28,10 @@ export interface Stage {
   _id?: string;
   name: string;                 // The name of the stage (e.g., "SS1 Elatia")
   distance: number;             // Distance of the stage in kilometers
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled'; // Stage status
+  status: 'completed' | 'cancelled' | 'upcoming'; // Stage status matching Sanity schema
   startTime: string;            // The start time of the stage
+  date?: string;                // The date of the stage
+  time?: string;                // The time of the stage
   rally?: {                     // Reference to the rally this stage belongs to
     _type: 'reference';
     _ref: string;
@@ -165,12 +167,17 @@ export interface StageResult {
     _type: 'reference';
     _ref: string;
   };
+  results?: DriverResult[];     // List of driver results for this stage
 }
 
 // Retirement represents information about teams retiring from a rally
 export interface Retirement {
   _id: string;
   reason: string;               // Reason for retirement (e.g., "engine failure", "accident")
+  rally?: {                     // Reference to the rally
+    _type: 'reference';
+    _ref: string;
+  };
   stage: {                      // The stage during which the team retired
     _type: 'reference';
     _ref: string;

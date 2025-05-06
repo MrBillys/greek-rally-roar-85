@@ -10,8 +10,9 @@ import { CalendarIcon, Clock, Flag, MapIcon, Trophy } from "lucide-react";
 import NotFound from "./NotFound";
 import { useRallyById, useLiveResults, useOverallStandings, useStageResults } from "@/hooks/useSanityData";
 import { urlFor } from "@/lib/sanity";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "@/components/ui/use-toast";
 
 const RallyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -24,10 +25,21 @@ const RallyDetail = () => {
   // Filter results and standings for this rally
   const rallyResults = rally ? results.filter(result => result.rallyId === rally._id) : [];
   const rallyStandings = rally ? standings.find(standing => standing.rallyId === rally._id) : null;
-  const stageResults = rally && selectedStageId ? results.find(result => result.stageId === selectedStageId) : null;
+  
+  // Fetch results for the selected stage
+  const { results: stageResults, loading: stageResultsLoading, error: stageResultsError } = 
+    useStageResults(selectedStageId);
+
+  useEffect(() => {
+    if (rally?.specialStages && rally.specialStages.length > 0 && !selectedStageId) {
+      console.log("Setting initial selected stage:", rally.specialStages[0]?._id);
+      setSelectedStageId(rally.specialStages[0]?._id || null);
+    }
+  }, [rally]);
 
   // Handle stage selection
   const handleStageSelect = (stageId: string) => {
+    console.log("Stage selected:", stageId);
     setSelectedStageId(stageId);
   };
 
@@ -60,8 +72,12 @@ const RallyDetail = () => {
   }
 
   if (rallyError || !rally) {
+    console.error("Rally error:", rallyError);
     return <NotFound />;
   }
+
+  console.log("Rally data:", rally);
+  console.log("Special stages:", rally.specialStages);
 
   // Helper function to get status badge
   const getStatusBadge = () => {
@@ -155,8 +171,8 @@ const RallyDetail = () => {
                           >
                             <TableCell className="font-medium">{stage.name}</TableCell>
                             <TableCell>{stage.distance} km</TableCell>
-                            <TableCell>{stage.date}</TableCell>
-                            <TableCell>{stage.time}</TableCell>
+                            <TableCell>{stage.date || "TBD"}</TableCell>
+                            <TableCell>{stage.time || "TBD"}</TableCell>
                             <TableCell>
                               {getStageStatusBadge(stage.status)}
                             </TableCell>
@@ -204,9 +220,16 @@ const RallyDetail = () => {
 
                     {/* Stage Results */}
                     {selectedStageId ? (
-                      stageResults ? (
+                      stageResultsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                          <p className="mt-4">Loading stage results...</p>
+                        </div>
+                      ) : stageResults && stageResults.length > 0 ? (
                         <div className="mb-6">
-                          <h3 className="text-lg font-bold mb-3">{stageResults.stageName} Results</h3>
+                          <h3 className="text-lg font-bold mb-3">
+                            {stageResults[0]?.stageName || "Stage"} Results
+                          </h3>
                           <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                             <Table>
                               <TableHeader>
@@ -219,7 +242,7 @@ const RallyDetail = () => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {stageResults.results && stageResults.results.map((driver: any, idx: number) => (
+                                {stageResults[0]?.results && stageResults[0]?.results.map((driver: any, idx: number) => (
                                   <TableRow key={idx}>
                                     <TableCell className="font-bold">{driver.position}</TableCell>
                                     <TableCell>{driver.carNumber}</TableCell>
