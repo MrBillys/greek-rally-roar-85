@@ -148,25 +148,16 @@ export interface RallyResult {
 // StageResult represents results for each special stage
 export interface StageResult {
   _id: string;
-  stageId: string;              // ID of the stage
-  stageName: string;            // Name of the stage
-  rallyId: string;              // ID of the rally
-  rallyName: string;            // Name of the rally
-  position: number;             // Position in the special stage
-  stageTime: string;            // Time taken to complete the stage
-  gap: string;                  // Time gap to the leader in the stage
-  cumulativeTime: string;       // Total cumulative time for the rally up to that stage
-  retired: boolean;             // Whether the team retired from the stage
-  onboardLink?: string;         // Link to an onboard video for that stage
-  entry: {                      // Reference to the entry (team)
-    _type: 'reference';
-    _ref: string;
+  rally: {
+    _id: string;
+    title: string;
   };
-  stage: {                      // Reference to the stage
-    _type: 'reference';
-    _ref: string;
+  stage: {
+    _id: string;
+    name: string;
   };
-  results?: DriverResult[];     // List of driver results for this stage
+  date: string; // ISO datetime string
+  results: DriverResult[];
 }
 
 // Retirement represents information about teams retiring from a rally
@@ -266,10 +257,29 @@ export interface Penalty {
 
 // DriverResult represents a single driver result within a RallyResult or StageResult
 export interface DriverResult {
-  position: number;             // Final position
-  driver: string;               // Driver name
-  time: string;                 // Time or stage time
-  gap: string;                  // Gap to leader
-  carNumber: number;            // Car number
-  status: string;               // Status (e.g., "finished", "retired", "excluded")
+  position: number;
+  time: string;
+  gap: string;
+  penalties: string;
+  cumulativeTime: string;
+  carNumber: number;
+  status: 'finished' | 'dnf' | 'dns' | 'retired';
+
+  driver: {
+    _id: string;
+    name: string;
+    nationality?: string;
+  };
+
+  coDriver: {
+    _id: string;
+    name: string;
+    nationality?: string;
+  };
+
+  car: {
+    _id: string;
+    make: string;
+    model: string;
+  };
 }
