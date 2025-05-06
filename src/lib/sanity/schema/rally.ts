@@ -19,7 +19,7 @@ export default {
     {
       name: 'date',
       title: 'Date',
-      type: 'datetime',
+      type: 'date',
       description: 'The start date of the rally'
     },
     {
@@ -79,38 +79,12 @@ export default {
       name: 'specialStages',
       title: 'Special Stages',
       type: 'array',
-      of: [{ type: 'object', fields: [
+      of: [
         {
-          name: 'name',
-          title: 'Name',
-          type: 'string'
-        },
-        {
-          name: 'distance',
-          title: 'Distance',
-          type: 'number'
-        },
-        {
-          name: 'status',
-          title: 'Status',
-          type: 'string'
-        },
-        {
-          name: 'startTime',
-          title: 'Start Time',
-          type: 'datetime'
-        },
-        {
-          name: 'date',
-          title: 'Date',
-          type: 'date'
-        },
-        {
-          name: 'time',
-          title: 'Time',
-          type: 'string'
+          type: 'reference',
+          to: [{ type: 'stage' }]
         }
-      ]}],
+      ],
       description: 'The special stages in this rally'
     },
     {

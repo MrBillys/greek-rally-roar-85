@@ -1,3 +1,4 @@
+
 // Import all schema types
 import rally from './rally';
 import stage from './stage';
@@ -14,7 +15,7 @@ import championship from './championship';
 import onboardLink from './onboardLink';
 import penalty from './penalty';
 
-// Export as a named export 'schemaTypes' for Sanity to use
+// Export the schema array
 export const schemaTypes = [
   // Document types
   rally,
@@ -32,6 +33,3 @@ export const schemaTypes = [
   onboardLink,
   penalty,
 ];
-
-// Also keep the default export for backward compatibility
-export default schemaTypes;
