@@ -31,6 +31,16 @@ const RallyDetail = () => {
     setSelectedStageId(stageId);
   };
 
+  // Handle switching to results tab with selected stage
+  const handleStageClick = (stageId: string) => {
+    setSelectedStageId(stageId);
+    // Find and click the results tab
+    const resultsTab = document.querySelector('[data-state="inactive"][value="results"]') as HTMLElement;
+    if (resultsTab) {
+      resultsTab.click();
+    }
+  };
+
   // Handling loading and error states
   if (rallyLoading) {
     return (
@@ -64,6 +74,20 @@ const RallyDetail = () => {
         return <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Completed</Badge>;
       default:
         return null;
+    }
+  };
+
+  // Helper function to get stage status badge
+  const getStageStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Completed</Badge>;
+      case "upcoming":
+        return <Badge variant="secondary">Upcoming</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
@@ -127,23 +151,14 @@ const RallyDetail = () => {
                           <TableRow 
                             key={index} 
                             className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => {
-                              setSelectedStageId(stage._id);
-                              document.querySelector('[data-state="inactive"][value="results"]')?.click();
-                            }}
+                            onClick={() => handleStageClick(stage._id)}
                           >
                             <TableCell className="font-medium">{stage.name}</TableCell>
                             <TableCell>{stage.distance} km</TableCell>
                             <TableCell>{stage.date}</TableCell>
                             <TableCell>{stage.time}</TableCell>
                             <TableCell>
-                              <Badge variant={
-                                stage.status === "completed" ? "success" : 
-                                stage.status === "upcoming" ? "secondary" : 
-                                stage.status === "cancelled" ? "destructive" : "outline"
-                              }>
-                                {stage.status}
-                              </Badge>
+                              {getStageStatusBadge(stage.status)}
                             </TableCell>
                           </TableRow>
                         ))}
