@@ -106,17 +106,24 @@ const RallyDetail = () => {
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
-
-  // Format date for display
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "TBD";
-    return dateString;
+//format date
+  const formatDate = (iso: string | undefined) => {
+    if (!iso) return "TBA";
+    const d = new Date(iso);
+    return d.toLocaleDateString("el-GR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
-
-  // Format time for display
-  const formatTime = (timeString: string | undefined) => {
-    if (!timeString) return "TBD";
-    return timeString;
+  
+  const formatTime = (iso: string | undefined) => {
+    if (!iso) return "TBA";
+    const d = new Date(iso);
+    return d.toLocaleTimeString("el-GR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -183,8 +190,8 @@ const RallyDetail = () => {
                           >
                             <TableCell className="font-medium">{stage.name}</TableCell>
                             <TableCell>{stage.distance} km</TableCell>
-                            <TableCell>{formatDate(stage.date)}</TableCell>
-                            <TableCell>{formatTime(stage.time)}</TableCell>
+                            <TableCell>{formatDate(stage.startTime)}</TableCell>
+                            <TableCell>{formatTime(stage.startTime)}</TableCell>
                             <TableCell>
                               {getStageStatusBadge(stage.status)}
                             </TableCell>

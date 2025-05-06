@@ -169,9 +169,7 @@ export function useRallyById(slug: string | undefined) {
           name,
           distance,
           status,
-          "startTime": startTime,
-          "date": coalesce(split(string(startTime), "T")[0], ''),
-          "time": coalesce(split(split(string(startTime), "T")[1], ".")[0], '')
+          "startTime": startTime
         }
       }
     `, { slug })
