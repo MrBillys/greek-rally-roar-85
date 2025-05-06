@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { client } from "@/lib/sanity";
 import type { 
@@ -163,14 +164,14 @@ export function useRallyById(slug: string | undefined) {
         description,
         championship->{_id, name},
         slug,
-        "specialStages": *[_type == "stage" && references(^._id)] {
+        "specialStages": *[_type == "stage" && references(^._id)] | order(_createdAt asc) {
           _id,
           name,
           distance,
           status,
-          startTime,
-          date,
-          time
+          "startTime": startTime,
+          "date": coalesce(split(string(startTime), "T")[0], ''),
+          "time": coalesce(split(split(string(startTime), "T")[1], ".")[0], '')
         }
       }
     `, { slug })
@@ -469,6 +470,14 @@ export function useStageResults(stageId: string | undefined) {
           _id,
           name,
           distance,
+          status
+        },
+        results[] {
+          position,
+          driver,
+          time,
+          gap,
+          carNumber,
           status
         }
       }

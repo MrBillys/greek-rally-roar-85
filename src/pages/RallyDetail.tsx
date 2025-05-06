@@ -107,6 +107,18 @@ const RallyDetail = () => {
     }
   };
 
+  // Format date for display
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "TBD";
+    return dateString;
+  };
+
+  // Format time for display
+  const formatTime = (timeString: string | undefined) => {
+    if (!timeString) return "TBD";
+    return timeString;
+  };
+
   return (
     <ThemeProvider defaultTheme="light">
       <div className="flex flex-col min-h-screen">
@@ -171,8 +183,8 @@ const RallyDetail = () => {
                           >
                             <TableCell className="font-medium">{stage.name}</TableCell>
                             <TableCell>{stage.distance} km</TableCell>
-                            <TableCell>{stage.date || "TBD"}</TableCell>
-                            <TableCell>{stage.time || "TBD"}</TableCell>
+                            <TableCell>{formatDate(stage.date)}</TableCell>
+                            <TableCell>{formatTime(stage.time)}</TableCell>
                             <TableCell>
                               {getStageStatusBadge(stage.status)}
                             </TableCell>

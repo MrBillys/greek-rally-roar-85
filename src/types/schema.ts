@@ -1,4 +1,3 @@
-
 // Schema types for the rally results platform
 
 // Rally represents a single rally event in the championship
@@ -29,9 +28,9 @@ export interface Stage {
   name: string;                 // The name of the stage (e.g., "SS1 Elatia")
   distance: number;             // Distance of the stage in kilometers
   status: 'completed' | 'cancelled' | 'upcoming'; // Stage status matching Sanity schema
-  startTime: string;            // The start time of the stage
-  date?: string;                // The date of the stage
-  time?: string;                // The time of the stage
+  startTime?: string;           // The start time of the stage (ISO date string)
+  date?: string;                // Extracted date part from startTime
+  time?: string;                // Extracted time part from startTime
   rally?: {                     // Reference to the rally this stage belongs to
     _type: 'reference';
     _ref: string;
