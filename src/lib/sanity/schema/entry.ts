@@ -25,11 +25,36 @@ export default {
       description: 'The co-driver\'s information'
     },
     {
-      name: 'car',
-      title: 'Car',
-      type: 'reference',
-      to: [{ type: 'car' }],
-      description: 'The car used by the team'
+      name: 'carDetails',
+      title: 'Car Details',
+      type: 'object',
+      fields: [
+        {
+          name: 'make',
+          title: 'Make',
+          type: 'string',
+          description: 'Car manufacturer (e.g., "Ford", "Toyota")'
+        },
+        {
+          name: 'model',
+          title: 'Model',
+          type: 'string',
+          description: 'Car model (e.g., "Fiesta", "Yaris")'
+        },
+        {
+          name: 'category',
+          title: 'Category',
+          type: 'string',
+          description: 'Car category (e.g., "WRC", "R5")'
+        },
+        {
+          name: 'year',
+          title: 'Year',
+          type: 'number',
+          description: 'Year of manufacture'
+        }
+      ],
+      description: 'Details of the car being used'
     },
     {
       name: 'team',
@@ -51,5 +76,21 @@ export default {
       to: [{ type: 'rally' }],
       description: 'The rally the entry is participating in'
     }
-  ]
+  ],
+  preview: {
+    select: {
+      number: 'number',
+      driverName: 'driver.name',
+      rallyName: 'rally.title',
+      carMake: 'carDetails.make',
+      carModel: 'carDetails.model'
+    },
+    prepare(selection) {
+      const { number, driverName, rallyName, carMake, carModel } = selection
+      return {
+        title: `#${number || 'N/A'} - ${driverName || 'Driver'}`,
+        subtitle: `${rallyName || 'Rally'} - ${carMake || ''} ${carModel || ''}`
+      }
+    }
+  }
 }

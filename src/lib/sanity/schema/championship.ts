@@ -11,15 +11,21 @@ export default {
       description: 'Name of the championship (e.g., "WRC 2023")'
     },
     {
+      name: 'year',
+      title: 'Year',
+      type: 'number',
+      description: 'The year of the championship'
+    },
+    {
       name: 'seasonStart',
       title: 'Season Start',
-      type: 'datetime',
+      type: 'date',
       description: 'The start date of the season'
     },
     {
       name: 'seasonEnd',
       title: 'Season End',
-      type: 'datetime',
+      type: 'date',
       description: 'The end date of the season'
     },
     {

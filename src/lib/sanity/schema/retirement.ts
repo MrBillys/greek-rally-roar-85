@@ -18,6 +18,13 @@ export default {
       description: 'The stage during which the team retired'
     },
     {
+      name: 'rally',
+      title: 'Rally',
+      type: 'reference',
+      to: [{ type: 'rally' }],
+      description: 'The rally during which the team retired'
+    },
+    {
       name: 'entry',
       title: 'Entry',
       type: 'reference',
@@ -30,5 +37,20 @@ export default {
       type: 'datetime',
       description: 'Date when the retirement occurred'
     }
-  ]
+  ],
+  preview: {
+    select: {
+      title: 'entry.number',
+      subtitle: 'reason',
+      rally: 'rally.title',
+      stage: 'stage.name'
+    },
+    prepare(selection) {
+      const { title, subtitle, rally, stage } = selection
+      return {
+        title: `Car #${title || 'N/A'} - ${subtitle || 'Retired'}`,
+        subtitle: `${rally || 'Rally'} - ${stage || 'Stage'}`
+      }
+    }
+  }
 }
