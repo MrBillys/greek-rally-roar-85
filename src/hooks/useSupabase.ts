@@ -11,19 +11,20 @@ interface BaseEntity {
 
 // Auth Hooks
 export function useAuth() {
-  const [user, setUser] = useState(supabase.auth.getUser());
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      setUser(await supabase.auth.getUser());
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user || null);
       setLoading(false);
     });
 
     // Initial session check
     const checkSession = async () => {
-      setUser(await supabase.auth.getUser());
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
       setLoading(false);
     };
     
@@ -89,7 +90,7 @@ export function useAuth() {
     loading,
     login,
     logout,
-    isAuthenticated: !!user?.data.user,
+    isAuthenticated: !!user,
   };
 }
 
@@ -206,6 +207,99 @@ export function useDrivers() {
   }, []);
 
   return { drivers, loading, error };
+}
+
+// Now let's add hooks for live results
+export function useLiveResults() {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('stage_results')
+          .select(`
+            *,
+            stage:stages(*),
+            rally:rallies(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // Format the results for the UI
+        const formattedResults = data?.map(item => ({
+          id: item.id,
+          stageName: item.stage.name,
+          stageId: item.stage_id,
+          rallyId: item.rally_id,
+          rallyName: item.rally.title,
+          date: new Date(item.created_at).toLocaleDateString(),
+          results: [] // This would be populated from the actual stage results
+        })) || [];
+        
+        setResults(formattedResults);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching results:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch results'));
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, []);
+
+  return { results, loading, error };
+}
+
+// Hook for overall standings
+export function useOverallStandings() {
+  const [standings, setStandings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchStandings = async () => {
+      try {
+        setLoading(true);
+        
+        // This is a placeholder until we implement actual overall standings
+        // In a real application, this would likely be a separate table or computed from stage results
+        const { data: rallyData, error: rallyError } = await supabase
+          .from('rallies')
+          .select('*')
+          .eq('status', 'in-progress');
+
+        if (rallyError) throw rallyError;
+        
+        // Simplified standings data structure
+        const standingsData = rallyData?.map(rally => ({
+          rallyId: rally.id,
+          standings: [] // This would be populated from actual standings data
+        })) || [];
+        
+        setStandings(standingsData);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching standings:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch standings'));
+        setStandings([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStandings();
+  }, []);
+
+  return { standings, loading, error };
 }
 
 // CRUD operations for admin panel

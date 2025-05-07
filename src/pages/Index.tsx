@@ -7,8 +7,7 @@ import RallyCard from "@/components/rally-card";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChevronRight, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRallies, useDrivers, useLiveResults, useOverallStandings } from "@/hooks/useSanityData";
-import { urlFor } from "@/lib/sanity";
+import { useRallies, useDrivers, useLiveResults, useOverallStandings } from "@/hooks/useSupabase";
 
 const Index = () => {
   const { rallies, loading: ralliesLoading } = useRallies();
@@ -27,7 +26,7 @@ const Index = () => {
   // Get current ongoing rally standings if available
   const ongoingRally = rallies.find(rally => rally.status === "in-progress");
   const ongoingRallyStandings = ongoingRally 
-    ? standings.find(s => s.rallyId === ongoingRally._id)
+    ? standings.find(s => s.rallyId === ongoingRally.id)
     : null;
 
   return (
@@ -57,7 +56,18 @@ const Index = () => {
               ) : featuredRallies.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredRallies.map((rally) => (
-                    <RallyCard key={rally._id} rally={rally} />
+                    <RallyCard 
+                      key={rally.id} 
+                      rally={{
+                        id: rally.id,
+                        title: rally.title,
+                        location: rally.location,
+                        date: rally.date,
+                        image_url: rally.image_url,
+                        status: rally.status,
+                        slug: rally.slug
+                      }} 
+                    />
                   ))}
                 </div>
               ) : (
@@ -89,7 +99,7 @@ const Index = () => {
                   <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg">
                     {ongoingRally && ongoingRallyStandings ? (
                       <>
-                        <h3 className="text-lg font-bold mb-4">Current Rally: {ongoingRally.name}</h3>
+                        <h3 className="text-lg font-bold mb-4">Current Rally: {ongoingRally.title}</h3>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
@@ -145,11 +155,11 @@ const Index = () => {
               ) : featuredDrivers.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredDrivers.map((driver) => (
-                    <div key={driver._id} className="rally-card overflow-hidden">
+                    <div key={driver.id} className="rally-card overflow-hidden">
                       <div className="h-64 overflow-hidden">
-                        {driver.image && (
+                        {driver.photo_url && (
                           <img 
-                            src={urlFor(driver.image).width(400).height(300).url()} 
+                            src={driver.photo_url} 
                             alt={driver.name} 
                             className="w-full h-full object-cover"
                           />
@@ -158,7 +168,7 @@ const Index = () => {
                       <div className="p-6">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{driver.name}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                          {driver.car} | {driver.team}
+                          {driver.team ? driver.team.name : 'Independent'}
                         </p>
                         <div className="flex space-x-4 text-sm">
                           <div>

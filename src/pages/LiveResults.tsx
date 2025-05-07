@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Flag } from "lucide-react";
-import { useLiveResults, useOverallStandings } from "@/hooks/useSanityData";
+import { useLiveResults, useOverallStandings } from "@/hooks/useSupabase";
 
 const LiveResults = () => {
   const [selectedRally, setSelectedRally] = useState<string | null>(null);
@@ -134,7 +134,7 @@ const LiveResults = () => {
                         <TabsContent value="stages" className="p-4">
                           {rallyResults.length > 0 ? (
                             rallyResults.map((result) => (
-                              <div key={result._id} className="mb-6 last:mb-0">
+                              <div key={result.id} className="mb-6 last:mb-0">
                                 <div className="flex justify-between items-center mb-3">
                                   <h3 className="text-lg font-bold">{result.stageName}</h3>
                                   <span className="text-sm text-gray-500">{result.date}</span>
@@ -152,7 +152,7 @@ const LiveResults = () => {
                                     </thead>
                                     <tbody>
                                       {result.results.map((driver: any) => (
-                                        <tr key={`${result._id}-${driver.carNumber}`} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
+                                        <tr key={`${result.id}-${driver.carNumber}`} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
                                           <td className="px-4 py-3 font-bold">{driver.position}</td>
                                           <td className="px-4 py-3">{driver.carNumber}</td>
                                           <td className="px-4 py-3">{driver.driver}</td>

@@ -1,98 +1,92 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Flag, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useSupabase";
+import { Loader2 } from "lucide-react";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [formError, setFormError] = useState("");
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFormError("");
     
-    const { success } = await login(email, password);
+    if (!email || !password) {
+      setFormError("Please enter both email and password");
+      return;
+    }
+    
+    const { success, error } = await login(email, password);
     
     if (success) {
       navigate("/admin");
+    } else if (error) {
+      setFormError(error.message);
     }
-    
-    setIsLoading(false);
   };
 
   return (
-    <ThemeProvider defaultTheme="light">
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <Card className="max-w-md w-full">
-          <CardHeader className="space-y-2 text-center">
-            <div className="flex justify-center">
-              <Flag className="h-12 w-12 text-rally-purple" />
-            </div>
-            <CardTitle className="text-2xl">Greek Rally Admin</CardTitle>
-            <CardDescription>
-              Log in to access the admin dashboard
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Card className="w-96">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Greek Rally Admin</CardTitle>
+          <CardDescription>Log in to manage rally content</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin}>
+            <div className="space-y-4">
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
+                  placeholder="admin@example.com"
+                  autoComplete="email"
+                  disabled={loading}
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={loading}
                 />
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                type="submit"
-                className="w-full bg-rally-purple hover:bg-rally-purple-dark"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
-                  </>
-                ) : (
-                  "Log In"
-                )}
-              </Button>
-            </CardFooter>
+              {formError && (
+                <div className="text-sm text-red-500">{formError}</div>
+              )}
+            </div>
+            <Button className="w-full mt-4" type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Please wait
+                </>
+              ) : (
+                "Log In"
+              )}
+            </Button>
           </form>
-        </Card>
-      </div>
-    </ThemeProvider>
+        </CardContent>
+        <CardFooter className="text-sm text-gray-500 text-center">
+          <p className="w-full">Contact the administrator if you need access</p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 

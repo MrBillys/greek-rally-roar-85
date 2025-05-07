@@ -5,8 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flag } from "lucide-react";
-import { useDrivers } from "@/hooks/useSanityData";
-import { urlFor } from "@/lib/sanity";
+import { useDrivers } from "@/hooks/useSupabase";
 
 const Drivers = () => {
   const { drivers, loading, error } = useDrivers();
@@ -40,11 +39,11 @@ const Drivers = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {drivers.map((driver) => (
-                    <Card key={driver._id} className="overflow-hidden rally-card hover:scale-[1.01] transition-all">
+                    <Card key={driver.id} className="overflow-hidden rally-card hover:scale-[1.01] transition-all">
                       <div className="h-64 overflow-hidden relative">
-                        {driver.image && (
+                        {driver.photo_url && (
                           <img 
-                            src={urlFor(driver.image).width(400).height(300).url()} 
+                            src={driver.photo_url}
                             alt={driver.name}
                             className="w-full h-full object-cover"
                           />
@@ -67,10 +66,10 @@ const Drivers = () => {
                         
                         <div className="space-y-2 mb-4">
                           <div>
-                            <span className="font-medium">Car:</span> {driver.car}
+                            <span className="font-medium">Car:</span> Unknown
                           </div>
                           <div>
-                            <span className="font-medium">Team:</span> {driver.team}
+                            <span className="font-medium">Team:</span> {driver.team ? driver.team.name : 'Independent'}
                           </div>
                         </div>
                         
