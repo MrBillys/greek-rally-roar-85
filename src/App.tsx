@@ -22,6 +22,8 @@ import AdminTeamForm from "./pages/admin/AdminTeamForm";
 import AdminCars from "./pages/admin/AdminCars";
 import AdminCarForm from "./pages/admin/AdminCarForm";
 import AdminResults from "./pages/admin/AdminResults";
+import AdminStages from "./pages/admin/AdminStages";
+import AdminStageForm from "./pages/admin/AdminStageForm";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
@@ -65,6 +67,9 @@ const App = () => (
             <Route path="cars/new" element={<AdminCarForm />} />
             <Route path="cars/:id" element={<AdminCarForm />} />
             <Route path="results" element={<AdminResults />} />
+            <Route path="stages" element={<AdminStages />} />
+            <Route path="stages/new" element={<AdminStageForm />} />
+            <Route path="stages/:id" element={<AdminStageForm />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />
