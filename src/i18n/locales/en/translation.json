@@ -1,0 +1,134 @@
+
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "back": "Back",
+    "name": "Name",
+    "description": "Description",
+    "date": "Date",
+    "status": "Status",
+    "actions": "Actions",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success!",
+    "confirm": "Are you sure?",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "live": "Live Results",
+    "drivers": "Drivers",
+    "about": "About",
+    "admin": "Admin"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Log in",
+    "loginError": "Invalid email or password",
+    "backToWebsite": "Back to Website"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "rallies": "Rallies",
+    "drivers": "Drivers",
+    "teams": "Teams",
+    "cars": "Cars",
+    "results": "Results",
+    "manageRallies": "Manage rally events for the Greek Rally Championship",
+    "manageDrivers": "Manage drivers for the Greek Rally Championship",
+    "manageTeams": "Manage teams for the Greek Rally Championship",
+    "manageCars": "Manage rally cars for the Greek Rally Championship",
+    "manageResults": "Manage race results for the Greek Rally Championship",
+    "addRally": "Add Rally",
+    "addDriver": "Add Driver",
+    "addTeam": "Add Team",
+    "addCar": "Add Car",
+    "addResults": "Add Results",
+    "editRally": "Edit Rally",
+    "editDriver": "Edit Driver",
+    "editTeam": "Edit Team",
+    "editCar": "Edit Car",
+    "deleteConfirmation": "This will permanently delete this item and all associated data. This action cannot be undone.",
+    "deleting": "Deleting..."
+  },
+  "rally": {
+    "title": "Title",
+    "location": "Location",
+    "date": "Date",
+    "status": "Status",
+    "organizer": "Organizer",
+    "website": "Website",
+    "description": "Description",
+    "shortCode": "Short Code",
+    "slug": "Slug",
+    "statuses": {
+      "upcoming": "Upcoming",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    }
+  },
+  "driver": {
+    "name": "Name",
+    "nationality": "Nationality",
+    "birthdate": "Birthdate",
+    "bio": "Biography",
+    "team": "Team",
+    "photo": "Photo",
+    "championships": "Championships",
+    "podiums": "Podiums",
+    "slug": "Slug"
+  },
+  "team": {
+    "name": "Name",
+    "country": "Country",
+    "logo": "Logo",
+    "slug": "Slug"
+  },
+  "car": {
+    "make": "Make",
+    "model": "Model",
+    "year": "Year",
+    "engineCapacity": "Engine Capacity",
+    "category": "Category",
+    "team": "Team",
+    "image": "Image"
+  },
+  "stage": {
+    "name": "Name",
+    "distance": "Distance",
+    "date": "Date",
+    "time": "Time",
+    "startTime": "Start Time",
+    "status": "Status",
+    "statuses": {
+      "upcoming": "Upcoming",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "results": {
+    "position": "Position",
+    "driver": "Driver",
+    "coDriver": "Co-Driver",
+    "car": "Car",
+    "time": "Time",
+    "gap": "Gap",
+    "stage": "Stage",
+    "rally": "Rally"
+  },
+  "languageSwitch": {
+    "en": "English",
+    "el": "Greek"
+  }
+}
