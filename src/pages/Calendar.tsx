@@ -6,10 +6,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import RallyCard from "@/components/rally-card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { useRallies } from "@/hooks/useSanityData";
+import { useRallies } from "@/hooks/useSupabase";
 
 const Calendar = () => {
-  const [filter, setFilter] = useState<"all" | "upcoming" | "ongoing" | "completed">("all");
+  const [filter, setFilter] = useState<"all" | "upcoming" | "in-progress" | "completed">("all");
   const { rallies, loading, error } = useRallies();
   
   const filteredRallies = rallies.filter(rally => {
@@ -50,9 +50,9 @@ const Calendar = () => {
                   Upcoming
                 </Badge>
                 <Badge 
-                  variant={filter === "ongoing" ? "default" : "outline"} 
-                  className={`cursor-pointer px-4 py-2 text-sm ${filter === "ongoing" ? "bg-rally-purple hover:bg-rally-purple-dark" : ""}`}
-                  onClick={() => setFilter("ongoing")}
+                  variant={filter === "in-progress" ? "default" : "outline"} 
+                  className={`cursor-pointer px-4 py-2 text-sm ${filter === "in-progress" ? "bg-rally-purple hover:bg-rally-purple-dark" : ""}`}
+                  onClick={() => setFilter("in-progress")}
                 >
                   Ongoing
                 </Badge>
@@ -82,7 +82,7 @@ const Calendar = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredRallies.map((rally) => (
-                    <RallyCard key={rally._id} rally={rally} />
+                    <RallyCard key={rally.id} rally={rally} />
                   ))}
                 </div>
               )}

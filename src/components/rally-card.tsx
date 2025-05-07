@@ -3,19 +3,16 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { CalendarIcon, Flag, MapIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { urlFor } from "@/lib/sanity";
 
 interface RallyCardProps {
   rally: {
-    _id: string;
-    name: string;
+    id: string;
+    title: string;
     location: string;
     date: string;
-    image: any; // Sanity image
+    image_url?: string | null;
     status: "upcoming" | "in-progress" | "completed";
-    slug: {
-      current: string;
-    };
+    slug: string;
   };
 }
 
@@ -33,21 +30,21 @@ export default function RallyCard({ rally }: RallyCardProps) {
     }
   };
 
+  const placeholderImage = "https://images.unsplash.com/photo-1617886322168-72b886573c35?q=80&w=1600&auto=format&fit=crop";
+
   return (
-    <Link to={`/rallies/${rally.slug.current}`}>
+    <Link to={`/rallies/${rally.slug}`}>
       <Card className="rally-card h-full hover:translate-y-[-5px] transition-all duration-300">
         <div className="relative h-48 overflow-hidden">
-          {rally.image && (
-            <img
-              src={urlFor(rally.image).width(600).url()}
-              alt={rally.name}
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            />
-          )}
+          <img
+            src={rally.image_url || placeholderImage}
+            alt={rally.title}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          />
           <div className="absolute top-2 right-2">{getStatusBadge()}</div>
         </div>
         <CardHeader>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{rally.name}</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{rally.title}</h3>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center">

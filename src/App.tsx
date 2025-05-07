@@ -11,6 +11,19 @@ import Drivers from "./pages/Drivers";
 import About from "./pages/About";
 import RallyDetail from "./pages/RallyDetail";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRallies from "./pages/admin/AdminRallies";
+import AdminRallyForm from "./pages/admin/AdminRallyForm";
+import AdminDrivers from "./pages/admin/AdminDrivers";
+import AdminDriverForm from "./pages/admin/AdminDriverForm";
+import AdminTeams from "./pages/admin/AdminTeams";
+import AdminTeamForm from "./pages/admin/AdminTeamForm";
+import AdminCars from "./pages/admin/AdminCars";
+import AdminCarForm from "./pages/admin/AdminCarForm";
+import AdminResults from "./pages/admin/AdminResults";
+import AdminLogin from "./pages/admin/AdminLogin";
+import ProtectedRoute from "./components/admin/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +40,26 @@ const App = () => (
           <Route path="/drivers" element={<Drivers />} />
           <Route path="/about" element={<About />} />
           <Route path="/rallies/:slug" element={<RallyDetail />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="rallies" element={<AdminRallies />} />
+            <Route path="rallies/new" element={<AdminRallyForm />} />
+            <Route path="rallies/:id" element={<AdminRallyForm />} />
+            <Route path="drivers" element={<AdminDrivers />} />
+            <Route path="drivers/new" element={<AdminDriverForm />} />
+            <Route path="drivers/:id" element={<AdminDriverForm />} />
+            <Route path="teams" element={<AdminTeams />} />
+            <Route path="teams/new" element={<AdminTeamForm />} />
+            <Route path="teams/:id" element={<AdminTeamForm />} />
+            <Route path="cars" element={<AdminCars />} />
+            <Route path="cars/new" element={<AdminCarForm />} />
+            <Route path="cars/:id" element={<AdminCarForm />} />
+            <Route path="results" element={<AdminResults />} />
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
