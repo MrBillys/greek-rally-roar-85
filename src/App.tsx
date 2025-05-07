@@ -25,7 +25,14 @@ import AdminResults from "./pages/admin/AdminResults";
 import AdminLogin from "./pages/admin/AdminLogin";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
