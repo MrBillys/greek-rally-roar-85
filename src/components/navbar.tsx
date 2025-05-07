@@ -13,9 +13,9 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/placeholder.svg" alt="Logo" className="h-8 w-8 mr-2" />
+              <img src="/logo.png" alt="Logo" className="h-8 w-8 mr-2" />
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-                Greek Rally
+                StageTime.gr
               </span>
             </Link>
             <div className="hidden md:ml-6 md:block">

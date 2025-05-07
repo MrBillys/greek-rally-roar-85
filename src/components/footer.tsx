@@ -9,10 +9,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center">
-              <Flag className="h-8 w-8 text-rally-purple" />
-              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-                Greek<span className="text-rally-purple">Rally</span>
-              </span>
+            <img src="/logo.png" alt="Logo" className="h-45 w-45 mr-2" />
             </div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">
               The premier destination for Greek rally racing news, events, and results.
