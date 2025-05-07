@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Timer,
   Trophy,
   Users
 } from "lucide-react";
@@ -78,6 +79,7 @@ const AdminLayout = () => {
             <NavItem to="/admin/drivers" icon={Users} label={t('admin.drivers')} />
             <NavItem to="/admin/teams" icon={Users} label={t('admin.teams')} />
             <NavItem to="/admin/cars" icon={Car} label={t('admin.cars')} />
+            <NavItem to="/admin/stages" icon={Timer} label={t('admin.stages')} />
             <NavItem to="/admin/results" icon={Trophy} label={t('admin.results')} />
           </nav>
           <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
