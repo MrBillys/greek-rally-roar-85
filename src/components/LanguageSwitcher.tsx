@@ -1,7 +1,7 @@
 
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,29 +11,25 @@ import {
 import { Languages } from "lucide-react";
 
 const LanguageSwitcher = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+    setOpen(false);
   };
 
-  const currentLanguage = i18n.language === 'el' ? t('languageSwitch.el') : t('languageSwitch.en');
-  
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="w-9 px-0">
+        <Button variant="ghost" size="sm">
           <Languages className="h-4 w-4" />
-          <span className="sr-only">Toggle language</span>
+          <span className="ml-2 hidden md:inline-block">{i18n.language?.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => changeLanguage('en')}>
-          🇬🇧 {t('languageSwitch.en')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLanguage('el')}>
-          🇬🇷 {t('languageSwitch.el')}
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage("en")}>English</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage("el")}>Ελληνικά</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

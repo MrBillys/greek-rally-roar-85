@@ -1,61 +1,141 @@
+
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { format, parseISO } from "date-fns";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Clock, Flag, MapIcon, Trophy } from "lucide-react";
+import { Clock, Flag, MapIcon, Trophy, CalendarIcon } from "lucide-react";
 import NotFound from "./NotFound";
-import { useRallyBySlug, useLiveResults, useOverallStandings, useStageResults } from "@/hooks/useSanityData";
-import { urlFor } from "@/lib/sanity";
-import { useState, useEffect, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const RallyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  // Debug 1 - Verify URL parameter
-  useEffect(() => {
-    console.log("[DEBUG1] URL Slug Parameter:", slug);
-    if (!slug) {
-      console.error("[DEBUG1] No slug parameter detected in URL");
-    }
-  }, [slug]); //End Debug
+  
   // State declarations
+  const [rally, setRally] = useState<any | null>(null);
+  const [rallyLoading, setRallyLoading] = useState(true);
+  const [rallyError, setRallyError] = useState<Error | null>(null);
+
+  const [stages, setStages] = useState<any[]>([]);
+  const [stagesLoading, setStagesLoading] = useState(true);
+
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  const [stageResults, setStageResults] = useState<any[]>([]);
+  const [stageResultsLoading, setStageResultsLoading] = useState(false);
 
-  // Data fetching hooks
-  const { rally, loading: rallyLoading, error: rallyError } = useRallyBySlug(slug);
- 
-
-  const { results: liveResults, loading: resultsLoading, error: resultsError } = useLiveResults(rally?._id);
-  const { standings, loading: standingsLoading, error: standingsError } = useOverallStandings();
-  const { stageResult, loading: stageResultsLoading, error: stageResultsError } = 
-  useStageResults(selectedStageId);
-
-  // Derived state
-  const rallyResults = useMemo(() => {
-    return rally ? liveResults.filter(result => result.rally?._id === rally._id) : [];
-  }, [rally, liveResults]);
-
-  const rallyStandings = useMemo(() => {
-    return rally ? standings.find(standing => standing.rallyId === rally._id) : null;
-  }, [rally, standings]);
-
-  // Effects
+  // Fetch rally data
   useEffect(() => {
-    if (rally?.specialStages && rally.specialStages.length > 0 && !selectedStageId) {
-      setSelectedStageId(rally.specialStages[0]?._id || null);
-    }
+    const fetchRally = async () => {
+      if (!slug) return;
+
+      setRallyLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('rallies')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+        
+        if (error) throw error;
+        setRally(data);
+      } catch (error) {
+        console.error("Error fetching rally:", error);
+        setRallyError(error instanceof Error ? error : new Error('Failed to fetch rally'));
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load rally information",
+        });
+      } finally {
+        setRallyLoading(false);
+      }
+    };
+
+    fetchRally();
+  }, [slug]);
+
+  // Fetch stages when rally is loaded
+  useEffect(() => {
+    const fetchStages = async () => {
+      if (!rally) return;
+
+      setStagesLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('stages')
+          .select('*')
+          .eq('rally_id', rally.id)
+          .order('start_time', { ascending: true });
+          
+        if (error) throw error;
+        setStages(data || []);
+        
+        // Select first stage by default
+        if (data && data.length > 0 && !selectedStageId) {
+          setSelectedStageId(data[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching stages:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load stages",
+        });
+      } finally {
+        setStagesLoading(false);
+      }
+    };
+
+    fetchStages();
   }, [rally, selectedStageId]);
 
- 
-// Handle stage selection
-const handleStageSelect = (stageId: string) => {
-  console.log("Stage selected:", stageId);
-  setSelectedStageId(stageId);
-};
+  // Fetch stage results when a stage is selected
+  useEffect(() => {
+    const fetchStageResults = async () => {
+      if (!selectedStageId) return;
+
+      setStageResultsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('stage_results')
+          .select(`
+            *,
+            driver:drivers(*),
+            co_driver:drivers(*)
+          `)
+          .eq('stage_id', selectedStageId)
+          .order('position', { ascending: true });
+          
+        if (error) throw error;
+        setStageResults(data || []);
+      } catch (error) {
+        console.error("Error fetching stage results:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load stage results",
+        });
+      } finally {
+        setStageResultsLoading(false);
+      }
+    };
+
+    if (selectedStageId) {
+      fetchStageResults();
+    }
+  }, [selectedStageId]);
+
+  // Handle stage selection
+  const handleStageSelect = (stageId: string) => {
+    setSelectedStageId(stageId);
+  };
+
   const handleStageClick = (stageId: string) => {
     handleStageSelect(stageId);
     const resultsTab = document.querySelector('[data-state="inactive"][value="results"]') as HTMLElement;
@@ -65,8 +145,8 @@ const handleStageSelect = (stageId: string) => {
   };
 
   // Helper functions
-  const getStatusBadge = () => {
-    switch (rally?.status) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
       case "upcoming":
         return <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Upcoming</Badge>;
       case "in-progress":
@@ -91,23 +171,19 @@ const handleStageSelect = (stageId: string) => {
     }
   };
 
-  const formatDate = (iso: string | undefined) => {
-    if (!iso) return "TBA";
-    const d = new Date(iso);
-    return d.toLocaleDateString("el-GR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "TBA";
+    try {
+      return format(parseISO(dateStr), "dd MMM yyyy");
+    } catch (e) {
+      // Fallback for non-ISO strings
+      return dateStr;
+    }
   };
   
-  const formatTime = (iso: string | undefined) => {
-    if (!iso) return "TBA";
-    const d = new Date(iso);
-    return d.toLocaleTimeString("el-GR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTime = (timeStr: string | undefined) => {
+    if (!timeStr) return "TBA";
+    return timeStr;
   };
 
   // Loading and error states
@@ -141,11 +217,11 @@ const handleStageSelect = (stageId: string) => {
           {/* Rally Header */}
           <div 
             className="relative h-64 md:h-96 bg-cover bg-center"
-            style={{ backgroundImage: rally.image ? `url(${urlFor(rally.image).width(1600).url()})` : 'url(/placeholder.svg)' }}
+            style={{ backgroundImage: rally.image_url ? `url(${rally.image_url})` : 'url(/placeholder.svg)' }}
           >
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
               <div className="max-w-5xl mx-auto w-full text-white">
-                <div className="mb-4">{getStatusBadge()}</div>
+                <div className="mb-4">{getStatusBadge(rally.status)}</div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{rally.title}</h1>
                 <div className="flex flex-wrap gap-4 items-center text-sm md:text-base">
                   <div className="flex items-center">
@@ -165,7 +241,7 @@ const handleStageSelect = (stageId: string) => {
           <div className="max-w-5xl mx-auto py-8 px-4">
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">About the Rally</h2>
-              <p className="text-gray-700 dark:text-gray-300">{rally.description}</p>
+              <p className="text-gray-700 dark:text-gray-300">{rally.description || "No description available."}</p>
             </div>
             
             <Tabs defaultValue="stages">
@@ -177,7 +253,7 @@ const handleStageSelect = (stageId: string) => {
               
               <TabsContent value="stages">
                 <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  {rally.specialStages && rally.specialStages.length > 0 ? (
+                  {stages.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -189,23 +265,21 @@ const handleStageSelect = (stageId: string) => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {rally.specialStages.map((stage) => {
-                           return (
+                        {stages.map((stage) => (
                           <TableRow 
-                            key={stage._id} 
+                            key={stage.id} 
                             className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => handleStageClick(stage._id)}
+                            onClick={() => handleStageClick(stage.id)}
                           >
                             <TableCell className="font-medium">{stage.name}</TableCell>
                             <TableCell>{stage.distance} km</TableCell>
-                            <TableCell>{formatDate(stage.startTime)}</TableCell>
-                            <TableCell>{formatTime(stage.startTime)}</TableCell>
+                            <TableCell>{formatDate(stage.date)}</TableCell>
+                            <TableCell>{formatTime(stage.time)}</TableCell>
                             <TableCell>
                               {getStageStatusBadge(stage.status)}
                             </TableCell>
                           </TableRow>
-                           );
-                        })}
+                        ))}
                       </TableBody>
                     </Table>
                   ) : (
@@ -217,136 +291,100 @@ const handleStageSelect = (stageId: string) => {
               </TabsContent>
               
               <TabsContent value="results">
-  {resultsLoading ? (
-    <div className="text-center py-8">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
-      <p className="mt-4">Loading results...</p>
-    </div>
-  ) : resultsError ? (
-    <div className="text-center py-8">
-      <p className="text-red-500">Error loading results!</p>
-    </div>
-  ) : (
-    <>
-      {/* Stage Selection Bar */}
-      {rally.specialStages.length > 0 && (
-        <div className="mb-6 overflow-x-auto">
-          <div className="flex space-x-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            {rally.specialStages.map((stage) => (
-              <Button 
-                key={stage._id}
-                variant={selectedStageId === stage._id ? "default" : "outline"}
-                onClick={() => handleStageSelect(stage._id)}
-                className="whitespace-nowrap"
-              >
-                {stage.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
+                {stagesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                    <p className="mt-4">Loading stages...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Stage Selection Bar */}
+                    {stages.length > 0 && (
+                      <div className="mb-6 overflow-x-auto">
+                        <div className="flex space-x-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                          {stages.map((stage) => (
+                            <Button 
+                              key={stage.id}
+                              variant={selectedStageId === stage.id ? "default" : "outline"}
+                              onClick={() => handleStageSelect(stage.id)}
+                              className="whitespace-nowrap"
+                            >
+                              {stage.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Stage Results */}
                     {selectedStageId ? (
-  stageResultsLoading ? (
-    <div className="text-center py-8">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
-      <p className="mt-4">Loading stage results...</p>
-    </div>
-  ) : stageResult?.results?.length ? (
-    <div className="mb-6">
-      <h3 className="text-lg font-bold mb-3">
-        {stageResult.stage?.name || "Stage"} Results
-      </h3>
-      <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Pos</TableHead>
-              <TableHead>No</TableHead>
-              <TableHead>Driver</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Gap</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-          {stageResult.results?.map((driver) => (
-            <TableRow key={`${driver.driver._id}-${driver.position}`}>
-                <TableCell className="font-bold">{driver.position}</TableCell>
-                <TableCell>{driver.carNumber}</TableCell>
-                <TableCell>
-                  {driver.driver?.name || "Unknown Driver"}
-                  {driver.coDriver?.name && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
-                      {driver.coDriver.name}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="font-mono">{driver.time || "-"}</TableCell>
-                <TableCell className="font-mono">{driver.gap || "-"}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      driver.status === "finished" 
-                        ? "default" 
-                        : "destructive"
-                    }
-                    className="text-xs"
-                  >
-                    {driver.status?.toUpperCase() || "UNKNOWN"}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  ) : (
-    <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <Clock className="mx-auto h-16 w-16 text-gray-400" />
-      <p className="mt-4 text-gray-600 dark:text-gray-400">
-        No results available for this stage yet.
-      </p>
-    </div>
-
-                      )
-                    ) : rallyResults.length > 0 ? (
-                      <div>
-                        <h3 className="text-lg font-bold mb-3">Overall Rally Results</h3>
-                        {rallyResults.map((result) => (
-                          <div key={result._id} className="mb-6">
-                            <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Pos</TableHead>
-                                    <TableHead>No</TableHead>
-                                    <TableHead>Driver</TableHead>
-                                    <TableHead>Time</TableHead>
-                                    <TableHead>Gap</TableHead>
+                      stageResultsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
+                          <p className="mt-4">Loading stage results...</p>
+                        </div>
+                      ) : stageResults.length > 0 ? (
+                        <div className="mb-6">
+                          <h3 className="text-lg font-bold mb-3">
+                            {stages.find(s => s.id === selectedStageId)?.name || "Stage"} Results
+                          </h3>
+                          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Pos</TableHead>
+                                  <TableHead>No</TableHead>
+                                  <TableHead>Driver</TableHead>
+                                  <TableHead>Time</TableHead>
+                                  <TableHead>Gap</TableHead>
+                                  <TableHead>Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {stageResults.map((result) => (
+                                  <TableRow key={result.id}>
+                                    <TableCell className="font-bold">{result.position}</TableCell>
+                                    <TableCell>{result.car_number}</TableCell>
+                                    <TableCell>
+                                      {result.driver?.name || "Unknown Driver"}
+                                      {result.co_driver?.name && (
+                                        <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                          {result.co_driver.name}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="font-mono">{result.time || "-"}</TableCell>
+                                    <TableCell className="font-mono">{result.gap || "-"}</TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant={
+                                          result.status === "finished" 
+                                            ? "default" 
+                                            : "destructive"
+                                        }
+                                        className="text-xs"
+                                      >
+                                        {result.status?.toUpperCase() || "UNKNOWN"}
+                                      </Badge>
+                                    </TableCell>
                                   </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {result.results?.map((driver, idx) => (
-                                    <TableRow key={idx}>
-                                      <TableCell className="font-bold">{driver.position}</TableCell>
-                                      <TableCell>{driver.carNumber}</TableCell>
-                                      <TableCell>{driver.driver.name}</TableCell>
-                                      <TableCell className="font-mono">{driver.time}</TableCell>
-                                      <TableCell className="font-mono">{driver.gap}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
+                                ))}
+                              </TableBody>
+                            </Table>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                          <Clock className="mx-auto h-16 w-16 text-gray-400" />
+                          <p className="mt-4 text-gray-600 dark:text-gray-400">
+                            No results available for this stage yet.
+                          </p>
+                        </div>
+                      )
                     ) : (
                       <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
                         <Clock className="mx-auto h-16 w-16 text-gray-400" />
-                        <p className="mt-4 text-gray-600 dark:text-gray-400">No results available yet. Please select a stage or wait for results to be published.</p>
+                        <p className="mt-4 text-gray-600 dark:text-gray-400">Please select a stage to view results.</p>
                       </div>
                     )}
                   </>
@@ -354,54 +392,10 @@ const handleStageSelect = (stageId: string) => {
               </TabsContent>
               
               <TabsContent value="standings">
-                {standingsLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-rally-purple border-solid mx-auto"></div>
-                    <p className="mt-4">Loading standings...</p>
-                  </div>
-                ) : standingsError ? (
-                  <div className="text-center py-8">
-                    <p className="text-red-500">Error loading standings!</p>
-                  </div>
-                ) : rallyStandings ? (
-                  <div>
-                    <h3 className="text-lg font-bold mb-3 flex items-center">
-                      <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
-                      Rally Standings
-                    </h3>
-                    <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Pos</TableHead>
-                            <TableHead>No</TableHead>
-                            <TableHead>Driver</TableHead>
-                            <TableHead>Time</TableHead>
-                            <TableHead>Gap</TableHead>
-                            <TableHead>Points</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rallyStandings.standings?.map((driver, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-bold">{driver.position}</TableCell>
-                              <TableCell>{driver.carNumber}</TableCell>
-                              <TableCell>{driver.driver}</TableCell>
-                              <TableCell className="font-mono">{driver.totalTime}</TableCell>
-                              <TableCell className="font-mono">{driver.gap}</TableCell>
-                              <TableCell className="font-bold">{driver.points}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <Flag className="mx-auto h-16 w-16 text-gray-400" />
-                    <p className="mt-4 text-gray-600 dark:text-gray-400">No standings available yet.</p>
-                  </div>
-                )}
+                <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                  <Flag className="mx-auto h-16 w-16 text-gray-400" />
+                  <p className="mt-4 text-gray-600 dark:text-gray-400">Standings feature coming soon.</p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>

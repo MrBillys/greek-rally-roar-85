@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   Form,
@@ -26,15 +26,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  distance: z.coerce.number().positive('Distance must be positive'),
-  date: z.string().min(1, 'Date is required'),
-  time: z.string().min(1, 'Time is required'),
-  start_time: z.string().min(1, 'Start time is required'),
+  distance: z.coerce.number().positive('Distance must be a positive number'),
   status: z.string().min(1, 'Status is required'),
-  rally_id: z.string().min(1, 'Rally is required'),
+  date: z.date(),
+  time: z.string().min(1, 'Time is required'),
+  rally_id: z.string().uuid('Please select a rally'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,7 +52,7 @@ const StageForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(id ? true : false);
   const [rallies, setRallies] = useState<any[]>([]);
   
   const form = useForm<FormValues>({
@@ -52,10 +60,9 @@ const StageForm = () => {
     defaultValues: {
       name: '',
       distance: 0,
-      date: '',
-      time: '',
-      start_time: '',
       status: 'upcoming',
+      date: new Date(),
+      time: '08:00',
       rally_id: '',
     },
   });
@@ -65,18 +72,23 @@ const StageForm = () => {
       try {
         const { data, error } = await supabase
           .from('rallies')
-          .select('*')
-          .order('title');
+          .select('id, title')
+          .order('date', { ascending: false });
         
         if (error) throw error;
         setRallies(data || []);
       } catch (error) {
         console.error('Error fetching rallies:', error);
+        toast({
+          variant: 'destructive',
+          title: t('common.error'),
+          description: String(error),
+        });
       }
     };
     
     fetchRallies();
-  }, []);
+  }, [t]);
   
   useEffect(() => {
     const fetchStage = async () => {
@@ -94,13 +106,12 @@ const StageForm = () => {
         
         if (data) {
           form.reset({
-            name: data.name,
-            distance: data.distance,
-            date: data.date,
-            time: data.time,
-            start_time: data.start_time,
-            status: data.status,
-            rally_id: data.rally_id,
+            name: data.name || '',
+            distance: data.distance || 0,
+            status: data.status || 'upcoming',
+            date: data.date ? new Date(data.date) : new Date(),
+            time: data.time || '08:00',
+            rally_id: data.rally_id || '',
           });
         }
       } catch (error) {
@@ -121,36 +132,37 @@ const StageForm = () => {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      const formData = {
+      const formattedDate = format(values.date, 'yyyy-MM-dd');
+      const startTime = `${formattedDate}T${values.time}:00`;
+      
+      const stageData = {
         name: values.name,
         distance: values.distance,
-        date: values.date,
-        time: values.time,
-        start_time: values.start_time,
         status: values.status,
+        date: formattedDate,
+        time: values.time,
+        start_time: startTime,
         rally_id: values.rally_id,
       };
       
       let response;
       
       if (id) {
-        // Update existing stage
         response = await supabase
           .from('stages')
-          .update(formData)
+          .update(stageData)
           .eq('id', id);
       } else {
-        // Create new stage
         response = await supabase
           .from('stages')
-          .insert([formData]);
+          .insert([stageData]);
       }
       
       if (response.error) throw response.error;
       
       toast({
         title: t('common.success'),
-        description: id ? 'Stage updated successfully' : 'Stage created successfully',
+        description: id ? t('stage.updateSuccess') : t('stage.createSuccess'),
       });
       
       navigate('/admin/stages');
@@ -178,30 +190,30 @@ const StageForm = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {id ? 'Edit Stage' : 'Add Stage'}
+          {id ? t('admin.editStage') : t('admin.addStage')}
         </h1>
         <p className="text-muted-foreground">
-          {id ? 'Edit existing stage details' : 'Create a new rally stage'}
+          {id ? t('stage.editInstructions') : t('stage.createInstructions')}
         </p>
       </div>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('stage.name')}</FormLabel>
-                <FormControl>
-                  <Input placeholder="SS1 - Acropolis" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('stage.name')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Acropolis SS1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="distance"
@@ -212,28 +224,31 @@ const StageForm = () => {
                     <Input 
                       type="number" 
                       step="0.01"
-                      min="0"
+                      placeholder="12.5"
                       {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+          </div>
+          
+          <div className="grid gap-6 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="rally_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('results.rally')}</FormLabel>
+                  <FormLabel>{t('stage.rally')}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value}
+                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a rally" />
+                        <SelectValue placeholder={t('stage.selectRally')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -248,18 +263,70 @@ const StageForm = () => {
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('stage.status')}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('stage.selectStatus')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="upcoming">{t('stage.upcoming')}</SelectItem>
+                      <SelectItem value="in-progress">{t('stage.inProgress')}</SelectItem>
+                      <SelectItem value="completed">{t('stage.completed')}</SelectItem>
+                      <SelectItem value="cancelled">{t('stage.cancelled')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
           
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>{t('stage.date')}</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -272,54 +339,16 @@ const StageForm = () => {
                 <FormItem>
                   <FormLabel>{t('stage.time')}</FormLabel>
                   <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="start_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('stage.startTime')}</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
+                    <Input 
+                      type="time" 
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('stage.status')}</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="upcoming">{t('stage.statuses.upcoming')}</SelectItem>
-                    <SelectItem value="inProgress">{t('stage.statuses.inProgress')}</SelectItem>
-                    <SelectItem value="completed">{t('stage.statuses.completed')}</SelectItem>
-                    <SelectItem value="cancelled">{t('stage.statuses.cancelled')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           
           <div className="flex justify-end space-x-4">
             <Button
