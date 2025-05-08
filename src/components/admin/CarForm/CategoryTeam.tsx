@@ -78,7 +78,8 @@ const CategoryTeam = ({ form }: CategoryTeamProps) => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="">
+                {/* Fix: Change empty string to a non-empty string like "none" */}
+                <SelectItem value="none">
                   {t('car.noTeam')}
                 </SelectItem>
                 {teams.map((team) => (

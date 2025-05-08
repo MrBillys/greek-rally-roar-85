@@ -94,7 +94,7 @@ const RallyStageSelect = ({ form }: RallyStageSelectProps) => {
             <FormLabel>{t('result.rally')}</FormLabel>
             <Select
               onValueChange={field.onChange}
-              value={field.value}
+              value={field.value || undefined}
             >
               <FormControl>
                 <SelectTrigger>
@@ -122,7 +122,7 @@ const RallyStageSelect = ({ form }: RallyStageSelectProps) => {
             <FormLabel>{t('result.stage')}</FormLabel>
             <Select
               onValueChange={field.onChange}
-              value={field.value}
+              value={field.value || undefined}
               disabled={!watchRallyId}
             >
               <FormControl>

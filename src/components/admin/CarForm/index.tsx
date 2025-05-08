@@ -100,6 +100,9 @@ const CarForm = () => {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
+      // Handle the "none" value for team_id
+      const teamId = values.team_id === 'none' ? null : values.team_id;
+      
       const formData = {
         make: values.make,
         model: values.model,
@@ -107,7 +110,7 @@ const CarForm = () => {
         year: values.year,
         category: values.category,
         image_url: values.image_url || null,
-        team_id: values.team_id || null,
+        team_id: teamId,
       };
       
       let response;

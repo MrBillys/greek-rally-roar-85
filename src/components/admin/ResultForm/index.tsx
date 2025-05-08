@@ -98,11 +98,14 @@ const ResultForm = () => {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
+      // Handle the "none" value for co_driver_id
+      const coDriverId = values.co_driver_id === 'none' ? null : values.co_driver_id;
+      
       const resultData = {
         stage_id: values.stage_id,
         rally_id: values.rally_id,
         driver_id: values.driver_id,
-        co_driver_id: values.co_driver_id || null,
+        co_driver_id: coDriverId,
         time: values.time,
         position: values.position,
         gap: values.gap || null,

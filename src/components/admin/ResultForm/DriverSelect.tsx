@@ -60,7 +60,7 @@ const DriverSelect = ({ form }: DriverSelectProps) => {
             <FormLabel>{t('result.driver')}</FormLabel>
             <Select
               onValueChange={field.onChange}
-              value={field.value}
+              value={field.value || undefined}
             >
               <FormControl>
                 <SelectTrigger>
@@ -88,7 +88,7 @@ const DriverSelect = ({ form }: DriverSelectProps) => {
             <FormLabel>{t('result.coDriver')}</FormLabel>
             <Select
               onValueChange={field.onChange}
-              value={field.value || ''}
+              value={field.value || undefined}
             >
               <FormControl>
                 <SelectTrigger>
@@ -96,7 +96,8 @@ const DriverSelect = ({ form }: DriverSelectProps) => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="">
+                {/* Fix: Change empty string to a non-empty string like "none" */}
+                <SelectItem value="none">
                   {t('result.noCoDriver')}
                 </SelectItem>
                 {drivers.map((driver) => (
