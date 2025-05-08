@@ -1,3 +1,4 @@
+
 export * from './useAuth';
 export * from './useRallies';
 export * from './useRallyBySlug';
@@ -7,3 +8,4 @@ export * from './useAdminDrivers';
 export * from './useLiveResults';
 export * from './useOverallStandings';
 export * from './useAdminStages';
+export * from './useAdminResults';

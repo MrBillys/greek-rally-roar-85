@@ -3,9 +3,36 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "./theme-toggle";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { Button } from "./ui/button";
 
 export function Navbar() {
   const { t } = useTranslation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { path: "/", label: t('nav.home') },
+    { path: "/calendar", label: t('nav.calendar') },
+    { path: "/live", label: t('nav.live') },
+    { path: "/drivers", label: t('nav.drivers') },
+    { path: "/about", label: t('nav.about') },
+  ];
+
+  const NavLink = ({ path, label, onClick }: { path: string; label: string; onClick?: () => void }) => (
+    <Link
+      to={path}
+      onClick={onClick}
+      className={cn(
+        "text-gray-700 hover:text-rally-purple hover:bg-gray-50",
+        "dark:text-gray-200 dark:hover:text-white dark:hover:bg-gray-800",
+        "rounded-md px-3 py-2 text-sm font-medium transition-colors"
+      )}
+    >
+      {label}
+    </Link>
+  );
 
   return (
     <nav className="bg-white dark:bg-gray-900 sticky top-0 z-40 w-full border-b border-gray-200 dark:border-gray-700 shadow-sm">
@@ -18,47 +45,51 @@ export function Navbar() {
                 StageTime.gr
               </span>
             </Link>
-            <div className="hidden md:ml-6 md:block">
-              <div className="flex space-x-4">
-                <Link
-                  to="/"
-                  className="text-gray-900 hover:bg-gray-100 hover:text-rally-purple dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {t('nav.home')}
-                </Link>
-                <Link
-                  to="/calendar"
-                  className="text-gray-900 hover:bg-gray-100 hover:text-rally-purple dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {t('nav.calendar')}
-                </Link>
-                <Link
-                  to="/live"
-                  className="text-gray-900 hover:bg-gray-100 hover:text-rally-purple dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {t('nav.live')}
-                </Link>
-                <Link
-                  to="/drivers"
-                  className="text-gray-900 hover:bg-gray-100 hover:text-rally-purple dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {t('nav.drivers')}
-                </Link>
-                <Link
-                  to="/about"
-                  className="text-gray-900 hover:bg-gray-100 hover:text-rally-purple dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  {t('nav.about')}
-                </Link>
-              </div>
-            </div>
           </div>
+
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {navItems.map((item) => (
+              <NavLink key={item.path} path={item.path} label={item.label} />
+            ))}
+          </div>
+
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="ml-1"
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+          <div className="space-y-1 px-4 pb-3 pt-2">
+            {navItems.map((item) => (
+              <div key={item.path} className="py-1">
+                <NavLink 
+                  path={item.path} 
+                  label={item.label} 
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

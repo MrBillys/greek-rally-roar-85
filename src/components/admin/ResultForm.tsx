@@ -1,13 +1,13 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
-import { useTranslation } from 'react-i18next';
 
 import {
   Form,
@@ -31,11 +31,11 @@ const formSchema = z.object({
   stage_id: z.string().uuid('Please select a stage'),
   rally_id: z.string().uuid('Please select a rally'),
   driver_id: z.string().uuid('Please select a driver'),
-  co_driver_id: z.string().uuid().optional().nullable(),
+  co_driver_id: z.string().optional().nullable(),
   time: z.string().min(1, 'Time is required'),
-  position: z.coerce.number().int().positive('Position must be a positive integer'),
-  gap: z.string().optional(),
-  car_number: z.coerce.number().int().positive('Car number must be a positive integer'),
+  position: z.coerce.number().int().positive('Position must be a positive number'),
+  gap: z.string().optional().nullable(),
+  car_number: z.coerce.number().int().positive('Car number must be a positive number'),
   status: z.string().min(1, 'Status is required'),
 });
 
@@ -47,12 +47,10 @@ const ResultForm = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(id ? true : false);
-  
   const [rallies, setRallies] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
-  const [coDrivers, setCoDrivers] = useState<any[]>([]);
-  const [selectedRallyId, setSelectedRallyId] = useState<string | null>(null);
+  const [filteredStages, setFilteredStages] = useState<any[]>([]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,15 +60,24 @@ const ResultForm = () => {
       driver_id: '',
       co_driver_id: null,
       time: '',
-      position: 1,
+      position: 0,
       gap: '',
-      car_number: 1,
+      car_number: 0,
       status: 'finished',
     },
   });
 
-  // Watch the rally_id field to filter stages
-  const rally_id = form.watch('rally_id');
+  const watchRallyId = form.watch('rally_id');
+
+  // Filter stages based on selected rally
+  useEffect(() => {
+    if (watchRallyId) {
+      const filtered = stages.filter(stage => stage.rally_id === watchRallyId);
+      setFilteredStages(filtered);
+    } else {
+      setFilteredStages([]);
+    }
+  }, [watchRallyId, stages]);
 
   useEffect(() => {
     const fetchRallies = async () => {
@@ -91,44 +98,13 @@ const ResultForm = () => {
         });
       }
     };
-    
-    fetchRallies();
-  }, [t]);
-  
-  useEffect(() => {
-    const fetchDrivers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('drivers')
-          .select('id, name')
-          .order('name');
-        
-        if (error) throw error;
-        setDrivers(data || []);
-        setCoDrivers(data || []);
-      } catch (error) {
-        console.error('Error fetching drivers:', error);
-        toast({
-          variant: 'destructive',
-          title: t('common.error'),
-          description: String(error),
-        });
-      }
-    };
-    
-    fetchDrivers();
-  }, [t]);
-  
-  useEffect(() => {
+
     const fetchStages = async () => {
-      if (!rally_id) return;
-      
       try {
         const { data, error } = await supabase
           .from('stages')
-          .select('id, name')
-          .eq('rally_id', rally_id)
-          .order('start_time', { ascending: true });
+          .select('*')
+          .order('date', { ascending: false });
         
         if (error) throw error;
         setStages(data || []);
@@ -141,11 +117,30 @@ const ResultForm = () => {
         });
       }
     };
+
+    const fetchDrivers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('drivers')
+          .select('id, name')
+          .order('name');
+        
+        if (error) throw error;
+        setDrivers(data || []);
+      } catch (error) {
+        console.error('Error fetching drivers:', error);
+        toast({
+          variant: 'destructive',
+          title: t('common.error'),
+          description: String(error),
+        });
+      }
+    };
     
-    if (rally_id) {
-      fetchStages();
-    }
-  }, [rally_id, t]);
+    fetchRallies();
+    fetchStages();
+    fetchDrivers();
+  }, [t]);
   
   useEffect(() => {
     const fetchResult = async () => {
@@ -162,17 +157,16 @@ const ResultForm = () => {
         if (error) throw error;
         
         if (data) {
-          setSelectedRallyId(data.rally_id);
           form.reset({
-            stage_id: data.stage_id || '',
-            rally_id: data.rally_id || '',
-            driver_id: data.driver_id || '',
-            co_driver_id: data.co_driver_id || null,
-            time: data.time || '',
-            position: data.position || 1,
+            stage_id: data.stage_id,
+            rally_id: data.rally_id,
+            driver_id: data.driver_id,
+            co_driver_id: data.co_driver_id,
+            time: data.time,
+            position: data.position,
             gap: data.gap || '',
-            car_number: data.car_number || 1,
-            status: data.status || 'finished',
+            car_number: data.car_number,
+            status: data.status,
           });
         }
       } catch (error) {
@@ -197,7 +191,7 @@ const ResultForm = () => {
         stage_id: values.stage_id,
         rally_id: values.rally_id,
         driver_id: values.driver_id,
-        co_driver_id: values.co_driver_id,
+        co_driver_id: values.co_driver_id || null,
         time: values.time,
         position: values.position,
         gap: values.gap || null,
@@ -267,10 +261,7 @@ const ResultForm = () => {
                 <FormItem>
                   <FormLabel>{t('result.rally')}</FormLabel>
                   <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.setValue('stage_id', ''); // Reset stage selection when rally changes
-                    }}
+                    onValueChange={field.onChange}
                     value={field.value}
                   >
                     <FormControl>
@@ -300,7 +291,7 @@ const ResultForm = () => {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={!rally_id}
+                    disabled={!watchRallyId}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -308,7 +299,7 @@ const ResultForm = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {stages.map((stage) => (
+                      {filteredStages.map((stage) => (
                         <SelectItem key={stage.id} value={stage.id}>
                           {stage.name}
                         </SelectItem>
@@ -369,9 +360,9 @@ const ResultForm = () => {
                       <SelectItem value="">
                         {t('result.noCoDriver')}
                       </SelectItem>
-                      {coDrivers.map((coDriver) => (
-                        <SelectItem key={coDriver.id} value={coDriver.id}>
-                          {coDriver.name}
+                      {drivers.map((driver) => (
+                        <SelectItem key={driver.id} value={driver.id}>
+                          {driver.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -385,12 +376,18 @@ const ResultForm = () => {
           <div className="grid gap-6 sm:grid-cols-3">
             <FormField
               control={form.control}
-              name="time"
+              name="car_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('result.time')}</FormLabel>
+                  <FormLabel>{t('result.carNumber')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="3:45.7" {...field} />
+                    <Input 
+                      type="number" 
+                      min="1"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                      value={field.value || 0}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -406,42 +403,10 @@ const ResultForm = () => {
                   <FormControl>
                     <Input 
                       type="number" 
+                      min="1"
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="gap"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('result.gap')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1.3s" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="grid gap-6 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="car_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('result.carNumber')}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                      value={field.value || 0}
                     />
                   </FormControl>
                   <FormMessage />
@@ -467,10 +432,43 @@ const ResultForm = () => {
                     <SelectContent>
                       <SelectItem value="finished">{t('result.finished')}</SelectItem>
                       <SelectItem value="dnf">{t('result.dnf')}</SelectItem>
-                      <SelectItem value="dns">{t('result.dns')}</SelectItem>
-                      <SelectItem value="excluded">{t('result.excluded')}</SelectItem>
+                      <SelectItem value="dsq">{t('result.dsq')}</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('result.time')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="00:00:00.0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="gap"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('result.gap')}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="+00.0"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
