@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -15,7 +16,7 @@ export function useAdminDrivers() {
         .from('drivers')
         .select(`
           *,
-          team:teams(*)
+          team:teams(id, name)
         `)
         .order('name');
 

@@ -22,6 +22,7 @@ import AdminTeamForm from "./pages/admin/AdminTeamForm";
 import AdminCars from "./pages/admin/AdminCars";
 import AdminCarForm from "./pages/admin/AdminCarForm";
 import AdminResults from "./pages/admin/AdminResults";
+import AdminResultForm from "./pages/admin/AdminResultForm";
 import AdminStages from "./pages/admin/AdminStages";
 import AdminStageForm from "./pages/admin/AdminStageForm";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -67,6 +68,8 @@ const App = () => (
             <Route path="cars/new" element={<AdminCarForm />} />
             <Route path="cars/:id" element={<AdminCarForm />} />
             <Route path="results" element={<AdminResults />} />
+            <Route path="results/new" element={<AdminResultForm />} />
+            <Route path="results/:id" element={<AdminResultForm />} />
             <Route path="stages" element={<AdminStages />} />
             <Route path="stages/new" element={<AdminStageForm />} />
             <Route path="stages/:id" element={<AdminStageForm />} />

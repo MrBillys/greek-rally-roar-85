@@ -8,7 +8,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
-
 import {
   Form,
   FormControl,
@@ -19,7 +18,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -27,17 +25,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  nationality: z.string().min(2, 'Nationality must be at least 2 characters'),
-  birthdate: z.string().optional().nullable(),
-  bio: z.string().optional().nullable(),
-  photo_url: z.string().url().optional().or(z.literal('')),
-  championships: z.coerce.number().int().nonnegative().default(0),
-  podiums: z.coerce.number().int().nonnegative().default(0),
-  team_id: z.string().optional().nullable(),
   slug: z.string().min(2, 'Slug must be at least 2 characters'),
+  nationality: z.string().min(2, 'Nationality is required'),
+  birthdate: z.string().optional().nullable(),
+  team_id: z.string().optional().nullable(),
+  photo_url: z.string().url().optional().or(z.literal('')),
+  bio: z.string().optional().nullable(),
+  championships: z.coerce.number().int().nonnegative(),
+  podiums: z.coerce.number().int().nonnegative(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,14 +53,14 @@ const DriverForm = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      slug: '',
       nationality: '',
       birthdate: '',
-      bio: '',
+      team_id: null,
       photo_url: '',
+      bio: '',
       championships: 0,
       podiums: 0,
-      team_id: null,
-      slug: '',
     },
   });
 
@@ -101,14 +100,14 @@ const DriverForm = () => {
         if (data) {
           form.reset({
             name: data.name,
+            slug: data.slug,
             nationality: data.nationality,
             birthdate: data.birthdate || '',
-            bio: data.bio || '',
-            photo_url: data.photo_url || '',
-            championships: data.championships || 0,
-            podiums: data.podiums || 0,
             team_id: data.team_id,
-            slug: data.slug,
+            photo_url: data.photo_url || '',
+            bio: data.bio || '',
+            championships: data.championships,
+            podiums: data.podiums,
           });
         }
       } catch (error) {
@@ -131,14 +130,14 @@ const DriverForm = () => {
     try {
       const formData = {
         name: values.name,
+        slug: values.slug,
         nationality: values.nationality,
         birthdate: values.birthdate || null,
-        bio: values.bio || null,
+        team_id: values.team_id || null,
         photo_url: values.photo_url || null,
+        bio: values.bio || null,
         championships: values.championships,
         podiums: values.podiums,
-        team_id: values.team_id || null,
-        slug: values.slug,
       };
       
       let response;
@@ -160,7 +159,7 @@ const DriverForm = () => {
       
       toast({
         title: t('common.success'),
-        description: id ? 'Driver updated successfully' : 'Driver created successfully',
+        description: id ? t('driver.updateSuccess') : t('driver.createSuccess'),
       });
       
       navigate('/admin/drivers');
@@ -191,7 +190,7 @@ const DriverForm = () => {
           {id ? t('admin.editDriver') : t('admin.addDriver')}
         </h1>
         <p className="text-muted-foreground">
-          {id ? 'Edit existing driver details' : 'Create a new driver profile'}
+          {id ? t('driver.editInstructions') : t('driver.createInstructions')}
         </p>
       </div>
       
@@ -214,6 +213,22 @@ const DriverForm = () => {
             
             <FormField
               control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('driver.slug')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder="john-doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              control={form.control}
               name="nationality"
               render={({ field }) => (
                 <FormItem>
@@ -225,9 +240,7 @@ const DriverForm = () => {
                 </FormItem>
               )}
             />
-          </div>
-          
-          <div className="grid gap-6 sm:grid-cols-2">
+            
             <FormField
               control={form.control}
               name="birthdate"
@@ -235,43 +248,8 @@ const DriverForm = () => {
                 <FormItem>
                   <FormLabel>{t('driver.birthdate')}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field}
-                      value={field.value || ''}
-                    />
+                    <Input placeholder="YYYY-MM-DD" {...field} value={field.value || ''} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="team_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('driver.team')}</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || undefined}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a team" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        No team
-                      </SelectItem>
-                      {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -290,6 +268,7 @@ const DriverForm = () => {
                       type="number" 
                       min="0"
                       {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                       value={field.value || 0}
                     />
                   </FormControl>
@@ -309,6 +288,7 @@ const DriverForm = () => {
                       type="number" 
                       min="0"
                       {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                       value={field.value || 0}
                     />
                   </FormControl>
@@ -320,12 +300,41 @@ const DriverForm = () => {
           
           <FormField
             control={form.control}
+            name="team_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('driver.team')}</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value || ''}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('driver.selectTeam')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">{t('driver.noTeam')}</SelectItem>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
             name="photo_url"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('driver.photo')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com/photo.jpg" {...field} />
+                  <Input placeholder="https://example.com/photo.jpg" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -340,25 +349,11 @@ const DriverForm = () => {
                 <FormLabel>{t('driver.bio')}</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Driver biography" 
-                    className="min-h-[120px]" 
+                    placeholder={t('driver.bioPlaceholder')} 
+                    className="min-h-[120px]"
                     {...field}
                     value={field.value || ''}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="slug"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('driver.slug')}</FormLabel>
-                <FormControl>
-                  <Input placeholder="john-doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

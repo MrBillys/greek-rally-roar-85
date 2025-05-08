@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
@@ -17,8 +16,8 @@ export function useAdminResults() {
         .select(`
           *,
           stage:stages(*),
-          driver:drivers(id, name),
-          co_driver:drivers(id, name),
+          driver:drivers!stage_results_driver_id_fkey(id, name),
+          co_driver:drivers!stage_results_co_driver_id_fkey(id, name),
           rally:rallies(id, title)
         `)
         .order('created_at', { ascending: false });
@@ -47,8 +46,8 @@ export function useAdminResults() {
         .select(`
           *,
           stage:stages(*),
-          driver:drivers(id, name),
-          co_driver:drivers(id, name),
+          driver:drivers!stage_results_driver_id_fkey(id, name),
+          co_driver:drivers!stage_results_co_driver_id_fkey(id, name),
           rally:rallies(id, title)
         `)
         .eq('id', id)
